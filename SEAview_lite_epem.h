@@ -11,7 +11,7 @@ double SEAviewer(std::vector<SEAobject> &objs, std::vector<double> &reco_vertex_
     std::vector<double> all_fit_points_z;
 
     //Loop over all objects and only select those within Xcm of reco vertex
-    std::cout<<"SEAviewer::Begininig to calculte "<<radius<<" cm hits from all objs"<<std::endl;
+    std::cout<<"SEAviewer::Begininig to calculate "<<radius<<" cm hits from all objs"<<std::endl;
     for(auto &obj: objs){
         for(int j=0; j<obj.f_num_sp; j++){
             double dist_2_vert = sqrt( pow(reco_vertex_3D[0]-obj.f_sp_x[j],2)+  pow(reco_vertex_3D[1]-obj.f_sp_y[j],2) + pow(reco_vertex_3D[2]-obj.f_sp_z[j],2) );
