@@ -6,8 +6,8 @@
 void RunSEAview(){
 
     //base directory the input files are in
-    //std::string base_dir = "/pnfs/uboone/persistent/users/markross/Jan2022_gLEE_files/";
-    std::string base_dir = "/home/mark/work/uBooNE/EplusEmin_Retreat2022_Master/files/";
+    std::string base_dir = "/pnfs/uboone/persistent/users/markross/Jan2022_gLEE_files/";
+    //std::string base_dir = "/home/mark/work/uBooNE/EplusEmin_Retreat2022_Master/files/";
 
     //Grab the TTrees associated with the gLEE Ntuples (automatically friends the necessary bits internally). Function in plothelper.h simple and quick. 
     TTree *v = (TTree*)loadgLEE(base_dir+"vertex_Isotropic_EpEm_Batch1_v50.5_SP.root", "singlephotonana");
@@ -15,7 +15,10 @@ void RunSEAview(){
     //Create some dictionaryies so root can read vectors of vectors. Not strickly needed but safer. 
     gInterpreter->GenerateDictionary("std::vector<std::vector<int> >", "vector");
     gInterpreter->GenerateDictionary("std::vector<std::vector<double> >", "vector");
-    
+
+    //Don't bother showing things to screen, just pring PDF
+    gROOT->SetBatch(kTRUE);
+
     //Some vectors to store spacepoints. Spacepoints are the 3D reconstricted objects corresponding to the "matched" 2D recob::Hits on each plane
     std::vector<std::vector<double>> *reco_shower_spacepoint_x =0;
     std::vector<std::vector<double>> *reco_shower_spacepoint_y =0;
@@ -109,7 +112,7 @@ void RunSEAview(){
 
     //some configuration bits
     std::vector<int> cols = {kBlue-6, kMagenta+1};
-    bool do_plot_2d = false;
+    bool do_plot_2d = true;
     double radius = 8.0;
 
     //Loop over all entries
@@ -179,7 +182,7 @@ void RunSEAview(){
         h->Fill( reco_ang,true_opang);
         std::cout<<"How did we do? True OpAng : "<<true_opang<<" Reco OpAng : "<<reco_ang<<std::endl;
  
-        //break;        
+        break;        
     }
 
     //Normalize the TH2D into a respsonse matrix.

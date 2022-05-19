@@ -384,7 +384,7 @@ double SEAviewer(std::vector<SEAobject> &objs, std::vector<double> &reco_vertex_
 */
     }
 
-    l_top.SetHeader(print_name.c_str(),"C");
+    l_top.SetHeader((print_name+". 2D recob::Hits").c_str(),"C");
     l_top.SetLineWidth(0);
     l_top.SetLineColor(kWhite);
     l_top.Draw("same");
