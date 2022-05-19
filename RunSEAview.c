@@ -112,9 +112,10 @@ void RunSEAview(){
 
     //some configuration bits
     std::vector<int> cols = {kBlue-6, kMagenta+1};
-    bool do_plot_2d = false;
+    bool do_plot_2d = true;
     double radius = 8.0;
 
+    int cnt = 0; 
     //Loop over all entries
     for(size_t i=0; i< v->GetEntries(); i++){
 
@@ -181,7 +182,9 @@ void RunSEAview(){
         //Fill output Th2D
         h->Fill( reco_ang,true_opang);
         std::cout<<"How did we do? True OpAng : "<<true_opang<<" Reco OpAng : "<<reco_ang<<std::endl;
- 
+
+        cnt++;
+        if(cnt>100)break;
    //     break;        
     }
 

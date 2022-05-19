@@ -338,31 +338,34 @@ double SEAviewer(std::vector<SEAobject> &objs, std::vector<double> &reco_vertex_
     zero.SetMarkerSize(3);
     zero.SetMarkerColor(kBlack);
 
-    for(int i=0; i<3; i++){
-        can->cd(9+i);
+    if(out_graphs2D.size()!=0){
+        for(int i=0; i<3; i++){
+            can->cd(9+i);
 
-        out_graphs2D[i].Draw("ap");
-        out_graphs2D[i].GetYaxis()->SetRangeUser(-radius,radius);
-        out_graphs2D[i].GetXaxis()->SetLimits(-radius,radius);
-        out_graphs2D[i].SetTitle("");
-        out_graphs2D[i].SetMarkerSize(2);
-        out_graphs2D[i].SetMarkerStyle(20);
-        out_graphs2D[i].SetMarkerColor(kRed-6);
-        out_graphs2D[i+3].Draw("p");
-        out_graphs2D[i+3].SetMarkerSize(2);
-        out_graphs2D[i+3].SetMarkerStyle(20);
-        out_graphs2D[i+3].SetMarkerColor(kGreen-6);
+            std::cout<<"Int Line "<<i<<std::endl;
+            out_graphs2D[i].Draw("ap");
+            out_graphs2D[i].GetYaxis()->SetRangeUser(-radius,radius);
+            out_graphs2D[i].GetXaxis()->SetLimits(-radius,radius);
+            out_graphs2D[i].SetTitle("");
+            out_graphs2D[i].SetMarkerSize(2);
+            out_graphs2D[i].SetMarkerStyle(20);
+            out_graphs2D[i].SetMarkerColor(kRed-6);
+            out_graphs2D[i+3].Draw("p");
+            out_graphs2D[i+3].SetMarkerSize(2);
+            out_graphs2D[i+3].SetMarkerStyle(20);
+            out_graphs2D[i+3].SetMarkerColor(kGreen-6);
 
-        getLine2D(&left_fit[0],kRed-6,i,radius);
-        getLine2D(&right_fit[0],kGreen-6,i,radius);
-        zero.Draw("same p");
+            getLine2D(&left_fit[0],kRed-6,i,radius);
+            getLine2D(&right_fit[0],kGreen-6,i,radius);
+            zero.Draw("same p");
+        }
     }
-
 
     //**************************** INFO ***************************/
     TPad *p_top_info = (TPad*)can->cd(4);
     p_top_info->cd();
 
+    std::cout<<"Printing INFO into canvas 4"<<std::endl;
     TLegend l_top(0.1,0.0,0.9,1.0);
     l_top.SetTextSize(0.05);
 
@@ -389,6 +392,7 @@ double SEAviewer(std::vector<SEAobject> &objs, std::vector<double> &reco_vertex_
     l_top.SetLineColor(kWhite);
     l_top.Draw("same");
 
+    std::cout<<"And save PDF"<<std::endl;
     can->Update();
     can->SaveAs((print_name+".pdf").c_str(),"pdf");
     can->Close(); gSystem->ProcessEvents();
