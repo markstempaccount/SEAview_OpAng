@@ -6,8 +6,8 @@
 void RunSEAview(){
 
     //base directory the input files are in
-    std::string base_dir = "/pnfs/uboone/persistent/users/markross/Jan2022_gLEE_files/";
-    //std::string base_dir = "/home/mark/work/uBooNE/EplusEmin_Retreat2022_Master/files/";
+    //std::string base_dir = "/pnfs/uboone/persistent/users/markross/Jan2022_gLEE_files/";
+    std::string base_dir = "/home/mark/work/uBooNE/EplusEmin_Retreat2022_Master/files/";
 
     //Grab the TTrees associated with the gLEE Ntuples (automatically friends the necessary bits internally). Function in plothelper.h simple and quick. 
     TTree *v = (TTree*)loadgLEE(base_dir+"vertex_Isotropic_EpEm_Batch1_v50.5_SP.root", "singlephotonana");
@@ -196,10 +196,13 @@ void RunSEAview(){
         }
     
     }
+    
+    TCanvas *ch = new TCanvas();
+    ch->cd();
     h->Draw("colz");
     h->GetYaxis()->SetTitle("Reco e^{+}e^{-} Opening Angle [Deg]");
     h->GetXaxis()->SetTitle("True e^{+}e^{-} Opening Angle [Deg]");
-    
+    ch->SaveAs("Response.pdf","pdf");
 return;
 
 }
