@@ -112,7 +112,7 @@ void RunSEAview(){
 
     //some configuration bits
     std::vector<int> cols = {kBlue-6, kMagenta+1};
-    bool do_plot_2d = true;
+    bool do_plot_2d = false;
     double radius = 8.0;
 
     //Loop over all entries
@@ -182,7 +182,7 @@ void RunSEAview(){
         h->Fill( reco_ang,true_opang);
         std::cout<<"How did we do? True OpAng : "<<true_opang<<" Reco OpAng : "<<reco_ang<<std::endl;
  
-        break;        
+   //     break;        
     }
 
     //Normalize the TH2D into a respsonse matrix.

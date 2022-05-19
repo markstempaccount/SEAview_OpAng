@@ -43,7 +43,7 @@ double SEAviewer(std::vector<SEAobject> &objs, std::vector<double> &reco_vertex_
     //********************************** everything below here is plotting only *********************************//
 
 
-    std::string print_name = "SEAview_EVD_"+tag;
+    std::string print_name = "EVD_SEAview_"+tag;
     TCanvas * can=new TCanvas(print_name.c_str(),print_name.c_str(),3000,2400);
     can->Divide(4,3,0,0.1);
 
