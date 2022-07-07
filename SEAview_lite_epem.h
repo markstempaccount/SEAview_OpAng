@@ -1,15 +1,54 @@
 #include "SEAobject.h"
 #include "RecoOpAng1.h"
 
-double SEAviewer(std::vector<SEAobject> &objs, std::vector<double> &reco_vertex_3D, std::vector<double> & reco_vertex_2D, std::vector<double> & true_vertex, std::string tag, std::vector<std::string> tags, std::vector<std::string> vals,double radius,bool make_pdf){
+class SEAviewer
+{
+
+	//Variables passed to object
+	std::vector<SEAobject> &objs; 
+	std::vector<double> &reco_vertex_3D; 
+	std::vector<double> & reco_vertex_2D; 
+	std::vector<double> & true_vertex; 
+	std::string tag; 
+	std::vector<std::string> tags; 
+	std::vector<std::string> vals;
+	double radius;
+
+	//Variables related to graphing. Not ottally sure if I need to initalize these here or not	
+	std::vector<double> all_fit_points_x;
+	std::vector<double> all_fit_points_y;
+	std::vector<double> all_fit_points_z;
+	double reco_ang = 0.0;
+	std::vector<TGraph> out_graphs2D; //to save output left/right pts
+	std::vector<double> left_fit;//the parameters of the fitted lines, for visualization only
+	std::vector<double> right_fit;
+
+	//Output
+	double reco_ang;
 
 
-    //first get things set up to calculate reco_ang
-    //Will fill these with the fittable points.
-    std::vector<double> all_fit_points_x;
-    std::vector<double> all_fit_points_y;
-    std::vector<double> all_fit_points_z;
+	//Constructor to initalize variables
+	SEAviewer(std::vector<SEAobject> &objs1, std::vector<double> &reco_vertex_3D1, std::vector<double> &reco_vertex2D1, std::vector<double> &true_vertex1, std::string tag1, std::vector<std::string> tags1, std::vector<std::string>vals1, double radius1){
+	
+	objs = objs1;
+	reco_vertex_3D = reco_vertex_3D1;
+	reco_vertex_2D = reco_vertex_2D1; 
+	true_vertex = true_vertex1;
+	tag = tag1;
+	tags = tags1;
+	vals = vals1;
+	radius = radius1;
+	}
 
+	//*********Reco calc function here**********
+   
+
+
+
+	double reco_ang_calc(){ 
+	//first get things set up to calculate reco_ang
+	//Will fill these with the fittable points.
+   
     //Loop over all objects and only select those within Xcm of reco vertex
     std::cout<<"SEAviewer::Begininig to calculate "<<radius<<" cm hits from all objs"<<std::endl;
     for(auto &obj: objs){
@@ -24,12 +63,7 @@ double SEAviewer(std::vector<SEAobject> &objs, std::vector<double> &reco_vertex_
     }
 
     //Our outputs will be the angle calculated
-    double reco_ang = 0.0;
-    std::vector<TGraph> out_graphs2D; //to save output left/right pts
-    std::vector<double> left_fit;//the parameters of the fitted lines, for visualization only
-    std::vector<double> right_fit;
-
-    //We need minimum 2 points for this algorithm!
+        //We need minimum 2 points for this algorithm!
     if(all_fit_points_x.size()>1){
         reco_ang =   recoOpAng1(reco_vertex_3D,   all_fit_points_x,    all_fit_points_y,    all_fit_points_z,out_graphs2D,left_fit,right_fit);
     }else{
@@ -37,12 +71,17 @@ double SEAviewer(std::vector<SEAobject> &objs, std::vector<double> &reco_vertex_
     }
 
 
+
     //Get things set up to print to PDF if wanted, otherwise return the single number in degrees
-    if(!make_pdf) return reco_ang;
+    return;
+	}//End of reco calc
+
+
+
 
     //********************************** everything below here is plotting only *********************************//
 
-
+	plotter(){
     std::string print_name = "EVD_SEAview_"+tag;
     TCanvas * can=new TCanvas(print_name.c_str(),print_name.c_str(),3000,2400);
     can->Divide(4,3,0,0.1);
@@ -396,6 +435,8 @@ double SEAviewer(std::vector<SEAobject> &objs, std::vector<double> &reco_vertex_
     can->Update();
     can->SaveAs((print_name+".pdf").c_str(),"pdf");
     can->Close(); gSystem->ProcessEvents();
-    return reco_ang;
-}
+    return;
+	}//End of plotter
+
+};
 

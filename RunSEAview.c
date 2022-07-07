@@ -119,6 +119,8 @@ void RunSEAview(){
     //Loop over all entries
     for(size_t i=0; i< v->GetEntries(); i++){
 
+	std::cout<<"***************Start****************"<<std::endl;
+
         v->GetEntry(i);
         if(i%500==0)std::cout<<i<<"/"<<v->GetEntries()<<std::endl;
 
@@ -134,7 +136,6 @@ void RunSEAview(){
 
         double e_tot = (f_true_em_E->EvalInstance()+f_true_ep_E->EvalInstance());
         if(e_tot<0.1) continue;
-
 
         //Grab the instances for this event for some information
         double true_opang = f_true_opang->EvalInstance();
@@ -163,28 +164,36 @@ void RunSEAview(){
 
         //tracks
         for(int t=0; t< num_reco_tracks; t++){
-            std::cout<<"On traco number "<<t<<" which has "<<reco_track_spacepoint_x->at(t).size()<<" "<<reco_track_spacepoint_y->at(t).size()<<" "<<reco_track_spacepoint_z->at(t).size()<<" spacepoints"<<std::endl;
+            std::cout<<"On track number "<<t<<" which has "<<reco_track_spacepoint_x->at(t).size()<<" "<<reco_track_spacepoint_y->at(t).size()<<" "<<reco_track_spacepoint_z->at(t).size()<<" spacepoints"<<std::endl;
             objs.emplace_back(1,cols[objs.size()], reco_track_hit_wire->at(t), reco_track_hit_plane->at(t), reco_track_hit_tick->at(t), reco_track_hit_energy->at(t), reco_track_spacepoint_x->at(t), reco_track_spacepoint_y->at(t), reco_track_spacepoint_z->at(t));
             objs.back().print();
         }
 
 
-        double reco_ang = 0;
+        //double reco_ang = 0;
 
         //Some info to plot on the SEAviewer
         std::vector<std::string> tags ={"True #theta e^{+}e^{-}","E_max/E_total","E_total", "Num Trk: ","Num Shr: "};
         std::vector<std::string> vals = {  to_string_prec(true_opang,1),to_string_prec( std::max(f_true_ep_E->EvalInstance(), f_true_em_E->EvalInstance())/(f_true_em_E->EvalInstance()+f_true_ep_E->EvalInstance())  ,2),to_string_prec(f_true_em_E->EvalInstance()+f_true_ep_E->EvalInstance(),3),std::to_string(num_reco_tracks),std::to_string(num_reco_showers)};
 
+        //And do the cal does calculation and plots
+        SEAviewer reco_obj (objs, reco_vertex_3D, reco_vertex_2D, true_vertex, std::to_string(subrun_number)+"_"+std::to_string(event_number), tags, vals, radius); 
 
-        //And do the cal
-        reco_ang = SEAviewer(objs, reco_vertex_3D, reco_vertex_2D, true_vertex, std::to_string(subrun_number)+"_"+std::to_string(event_number), tags, vals, radius,do_plot_2d); 
+	reco_obj.reco_ang_calc();
+	reco_obj.plotter();
+	
+	
+	//Want to look at failure modes
+	float rtang_diff = fabs(reco_obj.reco_ang - true_opang);
+	if(rtang_diff < 4) continue;
+	std::cout<<"*******************************************Difference between True and Reco Ang "<<rtang_diff<<std::endl;	
 
         //Fill output Th2D
-        h->Fill( reco_ang,true_opang);
-        std::cout<<"How did we do? True OpAng : "<<true_opang<<" Reco OpAng : "<<reco_ang<<std::endl;
+        h->Fill( reco_obj.reco_ang,true_opang);
+        std::cout<<"How did we do? True OpAng : "<<true_opang<<" Reco OpAng : "<<reco_obj.reco_ang<<std::endl;
 
         cnt++;
-        if(cnt>100)break;
+        if(cnt>5)break; //Number of pdfs to save
    //     break;        
     }
 
