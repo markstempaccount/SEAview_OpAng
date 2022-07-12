@@ -4,11 +4,12 @@
 class SEAviewer
 {
 
+	public:
 	//Variables passed to object
 	std::vector<SEAobject> &objs; 
 	std::vector<double> &reco_vertex_3D; 
-	std::vector<double> & reco_vertex_2D; 
-	std::vector<double> & true_vertex; 
+	std::vector<double> &reco_vertex_2D; 
+	std::vector<double> &true_vertex; 
 	std::string tag; 
 	std::vector<std::string> tags; 
 	std::vector<std::string> vals;
@@ -18,17 +19,16 @@ class SEAviewer
 	std::vector<double> all_fit_points_x;
 	std::vector<double> all_fit_points_y;
 	std::vector<double> all_fit_points_z;
-	double reco_ang = 0.0;
 	std::vector<TGraph> out_graphs2D; //to save output left/right pts
 	std::vector<double> left_fit;//the parameters of the fitted lines, for visualization only
 	std::vector<double> right_fit;
 
 	//Output
-	double reco_ang;
+	double reco_ang = 0.0;
 
 
 	//Constructor to initalize variables
-	SEAviewer(std::vector<SEAobject> &objs1, std::vector<double> &reco_vertex_3D1, std::vector<double> &reco_vertex2D1, std::vector<double> &true_vertex1, std::string tag1, std::vector<std::string> tags1, std::vector<std::string>vals1, double radius1){
+	SEAviewer(std::vector<SEAobject> &objs1, std::vector<double> &reco_vertex_3D1, std::vector<double> &reco_vertex_2D1, std::vector<double> &true_vertex1, std::string tag1, std::vector<std::string> tags1, std::vector<std::string>vals1, double radius1){
 	
 	objs = objs1;
 	reco_vertex_3D = reco_vertex_3D1;
@@ -45,7 +45,7 @@ class SEAviewer
 
 
 
-	double reco_ang_calc(){ 
+	void  reco_ang_calc(){ 
 	//first get things set up to calculate reco_ang
 	//Will fill these with the fittable points.
    
@@ -81,7 +81,7 @@ class SEAviewer
 
     //********************************** everything below here is plotting only *********************************//
 
-	plotter(){
+	void plotter(){
     std::string print_name = "EVD_SEAview_"+tag;
     TCanvas * can=new TCanvas(print_name.c_str(),print_name.c_str(),3000,2400);
     can->Divide(4,3,0,0.1);
