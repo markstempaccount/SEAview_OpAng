@@ -24,27 +24,16 @@ class SEAviewer
 	std::vector<double> right_fit;
 
 	//Output
-	double reco_ang = 0.0;
+	double reco_ang = -9999;
 
 
 	//Constructor to initalize variables
-	SEAviewer(std::vector<SEAobject> &objs1, std::vector<double> &reco_vertex_3D1, std::vector<double> &reco_vertex_2D1, std::vector<double> &true_vertex1, std::string tag1, std::vector<std::string> tags1, std::vector<std::string>vals1, double radius1){
-	
-	objs = objs1;
-	reco_vertex_3D = reco_vertex_3D1;
-	reco_vertex_2D = reco_vertex_2D1; 
-	true_vertex = true_vertex1;
-	tag = tag1;
-	tags = tags1;
-	vals = vals1;
-	radius = radius1;
-	}
+	SEAviewer(std::vector<SEAobject> &objs1, std::vector<double> &reco_vertex_3D1, std::vector<double> &reco_vertex_2D1, std::vector<double> &true_vertex1, std::string tag1, std::vector<std::string> tags1, std::vector<std::string>vals1, double radius1):objs(objs1), reco_vertex_3D(reco_vertex_3D1), reco_vertex_2D(reco_vertex_2D1), true_vertex(true_vertex1), tag(tag1), tags(tags1), vals(vals1) {}
 
-	//*********Reco calc function here**********
-   
 
 
 
+	//*********Reco calc function here**********
 	void  reco_ang_calc(){ 
 	//first get things set up to calculate reco_ang
 	//Will fill these with the fittable points.
@@ -67,9 +56,8 @@ class SEAviewer
     if(all_fit_points_x.size()>1){
         reco_ang =   recoOpAng1(reco_vertex_3D,   all_fit_points_x,    all_fit_points_y,    all_fit_points_z,out_graphs2D,left_fit,right_fit);
     }else{
-        std::cout<<"WARNING: only "<< all_fit_points_x.size()<<" points withint "<<radius<<" cm so cant calc angle, defaulting to 0.0"<<std::endl;
+        std::cout<<"WARNING: only "<< all_fit_points_x.size()<<" points withint "<<radius<<" cm so cant calc angle, defaulting to -9999"<<std::endl;
     }
-
 
 
     //Get things set up to print to PDF if wanted, otherwise return the single number in degrees
