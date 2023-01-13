@@ -30,7 +30,7 @@
  
  bool first = true;
  
- // function Object to be minimized
+ // function Object to be minimized. The distance from a line to a scatter of points squared
  struct SumDistance2 {
     // the TGraph is a data member of the object
     TGraph2D *fGraph;
