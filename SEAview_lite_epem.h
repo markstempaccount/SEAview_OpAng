@@ -1,6 +1,7 @@
 #include "SEAobject.h"
 #include "RecoOpAng1.h"
 
+//Create a SEAviewer class, to show 2D and 3D hits and spacepoints visually
 class SEAviewer
 {
 
@@ -28,9 +29,13 @@ class SEAviewer
 
 
 	//Constructor to initalize variables
-	SEAviewer(std::vector<SEAobject> &objs1, std::vector<double> &reco_vertex_3D1, std::vector<double> &reco_vertex_2D1, std::vector<double> &true_vertex1, std::string tag1, std::vector<std::string> tags1, std::vector<std::string>vals1, double radius1):objs(objs1), reco_vertex_3D(reco_vertex_3D1), reco_vertex_2D(reco_vertex_2D1), true_vertex(true_vertex1), tag(tag1), tags(tags1), vals(vals1), radius(radius1) {}
-
-
+	SEAviewer(  std::vector<SEAobject> &objs1, 
+                std::vector<double> &reco_vertex_3D1, 
+                std::vector<double> &reco_vertex_2D1,   
+                std::vector<double> &true_vertex1, 
+                std::string tag1, std::vector<std::string> tags1,
+                std::vector<std::string>vals1, 
+                double radius1) :objs(objs1), reco_vertex_3D(reco_vertex_3D1), reco_vertex_2D(reco_vertex_2D1), true_vertex(true_vertex1), tag(tag1), tags(tags1), vals(vals1), radius(radius1) {}
 
 
 	//*********Reco calc function here**********
