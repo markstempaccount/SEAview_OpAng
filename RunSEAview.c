@@ -6,8 +6,8 @@
 void RunSEAview(){
 
     //base directory the input files are in
-    //std::string base_dir = "/pnfs/uboone/persistent/users/markross/Jan2022_gLEE_files/";
-    std::string base_dir = "/home/mark/work/uBooNE/EplusEmin_Retreat2022_Master/files/";
+    std::string base_dir = "/pnfs/uboone/persistent/users/markross/Jan2022_gLEE_files/";
+    //std::string base_dir = "/home/mark/work/uBooNE/EplusEmin_Retreat2022_Master/files/";
 
     //Grab the TTrees associated with the gLEE Ntuples (automatically friends the necessary bits internally). Function in plothelper.h simple and quick. 
     TTree *v = (TTree*)loadgLEE(base_dir+"vertex_Isotropic_EpEm_Batch1_v50.5_SP.root", "singlephotonana");
@@ -108,7 +108,7 @@ void RunSEAview(){
 
 
     //Make a Histogram to save the output 2D response
-    TH2D* h = new TH2D("True:Reco Opening Angle Response", "True:Reco Opening Angle Response",45,0,45,45,0,45);
+    TH2D* h = new TH2D("True:Reco Opening Angle Response", "True:Reco Opening Angle Response",180,0,180,180,0,180);
 
     //some configuration bits
     std::vector<int> cols = {kBlue-6, kMagenta+1};
@@ -185,15 +185,15 @@ void RunSEAview(){
 	
 	//Want to look at failure modes
 	float rtang_diff = fabs(reco_obj.reco_ang - true_opang);
-	if(rtang_diff < 4) continue;
+	//if(rtang_diff < 4) continue;
 	std::cout<<"*******************************************Difference between True and Reco Ang "<<rtang_diff<<std::endl;	
 
         //Fill output Th2D
-        h->Fill( reco_obj.reco_ang,true_opang);
+        h->Fill(true_opang, reco_obj.reco_ang);
         std::cout<<"How did we do? True OpAng : "<<true_opang<<" Reco OpAng : "<<reco_obj.reco_ang<<std::endl;
 
         cnt++;
-        if(cnt>5)break; //Number of pdfs to save
+        if(cnt>1000)break; //Number of pdfs to save
    //     break;        
     }
 
