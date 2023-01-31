@@ -2,6 +2,7 @@
 #include "plothelper.h"
 #include "SEAview_lite_epem.h"
 #include "SEAobject.h"
+#include "SetRealAspectRatio.h"
 
 void RunSEAview(){
 
@@ -108,7 +109,7 @@ void RunSEAview(){
 
 
     //Make a Histogram to save the output 2D response
-    TH2D* h = new TH2D("True:Reco Opening Angle Response", "True:Reco Opening Angle Response",180,0,180,180,0,180);
+    TH2D* h = new TH2D("True:Reco Opening Angle Response", "True:Reco Opening Angle Response",45,0,45,180,0,180);
 
     //some configuration bits
     std::vector<int> cols = {kBlue-6, kMagenta+1};
@@ -214,10 +215,16 @@ void RunSEAview(){
     
     TCanvas *ch = new TCanvas();
     ch->cd();
+    int lastbiny = h -> FindLastBinAbove(0, 2);
+    double lastbinyhighedge = h -> GetYaxis() -> GetBinLowEdge(lastbiny + 1);
+    h -> GetYaxis() -> SetRangeUser(0, lastbinyhighedge);
     h->Draw("colz");
     h->GetYaxis()->SetTitle("Reco e^{+}e^{-} Opening Angle [Deg]");
     h->GetXaxis()->SetTitle("True e^{+}e^{-} Opening Angle [Deg]");
+    SetRealAspectRatio(ch, 1);
+    SetRealAspectRatio(ch, 2);
     ch->SaveAs("Response.pdf","pdf");
+    h->SaveAs("Response.root","root");
 return;
 
 }
