@@ -4,7 +4,7 @@
 #include "SEAobject.h"
 #include "SetRealAspectRatio.h"
 
-void RunSEAview(bool graphEVD_SEAview = false, bool graphResponse = true, bool normalizeResponse = false, double dist_2_true_max = 1.0, double min_rtang_diff = 0, int maxcnt = 1e6, double easymax = 0.9, double e_totmin = 0.1){
+void RunSEAview(double radius = 8.0, bool graphEVD_SEAview = false, bool graphResponse = true, bool normalizeResponse = false, double dist_2_true_max = 1.0, double min_rtang_diff = 0, int maxcnt = 1e6, double easymax = 0.9, double e_totmin = 0.1, bool iterateRadius = false, int loop = 1){
 
 	//base directory the input files are in
 	std::string base_dir = "/pnfs/uboone/persistent/users/markross/Jan2022_gLEE_files/";
@@ -110,15 +110,15 @@ void RunSEAview(bool graphEVD_SEAview = false, bool graphResponse = true, bool n
 
 	//Make a Histogram to save the output 2D response
 	TH2D* h1 = new TH2D("True:Reco Opening Angle Response", "True:Reco Opening Angle Response",45,0,45,180,0,180);
-	TH2D* h2 = new TH2D("Num Tracks + Showers:Reco Opening Angle Error", "Num Tracks + Showers:Reco Opening Angle Error", 2, 1, 3, 225, -45, 180);
-	TH2D* h3 = new TH2D("E_max/E_total:Reco Opening Angle Error", "E_max/E_total:Reco Opening Angle Error", (int) std::round((easymax - 0.50)/0.01), 0.50, easymax, 225, -45, 180);
-	TH2D* h4 = new TH2D("E_total:Reco Opening Angle Error", "E_total:Reco Opening Angle Error", (int) std::round((2.0 - e_totmin)/0.01), e_totmin, 2.0, 225, -45, 180);
-	TH2D* h5 = new TH2D("Reco Vertex Error: Reco Opening Angle Error", "Reco Vertex Error: Reco Opening Angle Error", dist_2_true_max/0.01, 0, dist_2_true_max, 225, -45, 180); 
+	TH2D* h2 = new TH2D("Num Tracks + Showers:Reco Opening Angle Error", "Num Tracks + Showers:Reco Opening Angle Error", 2, 1, 3, 200, -200, 200);
+	TH2D* h3 = new TH2D("E_max/E_total:Reco Opening Angle Error", "E_max/E_total:Reco Opening Angle Error", (int) std::round((easymax - 0.50)/0.01), 0.50, easymax, 200, -200, 200);
+	TH2D* h4 = new TH2D("True:Reco Opening Angle Error", "E_total:Reco Opening Angle Error", 45, 0, 45, 200, -200, 200);
+	TH2D* h5 = new TH2D("Reco Vertex Error:Reco Opening Angle Error", "Reco Vertex Error:Reco Opening Angle Error", dist_2_true_max/0.01, 0, dist_2_true_max, 200, -200, 200);
+//	TH2D *h6 = new TH2D("Radius:Reco Opening Angle Error", 
 
 	//some configuration bits
 	std::vector<int> cols = {kBlue-6, kMagenta+1};
 	bool do_plot_2d = true;
-	double radius = 3.0;
 
 	int cnt = 0; 
 	//Loop over all entries
@@ -197,11 +197,12 @@ void RunSEAview(bool graphEVD_SEAview = false, bool graphResponse = true, bool n
 
 		//Fill output Th2D
 		if(graphResponse){
+			double percenterror = (reco_obj.reco_ang - true_opang)/true_opang;
 			h1 -> Fill(true_opang, reco_obj.reco_ang);
-			h2 -> Fill(num_reco_showers+num_reco_tracks, reco_obj.reco_ang - true_opang);
-			h3 -> Fill(easy, reco_obj.reco_ang - true_opang);
-			h4 -> Fill(e_tot, reco_obj.reco_ang - true_opang);
-			h5 -> Fill(dist_2_true, reco_obj.reco_ang - true_opang);
+			h2 -> Fill(num_reco_showers+num_reco_tracks, percenterror);
+			h3 -> Fill(easy, percenterror);
+			h4 -> Fill(true_opang, percenterror);
+			h5 -> Fill(dist_2_true, percenterror);
 		}
 		std::cout<<"How did we do? True OpAng : "<<true_opang<<" Reco OpAng : "<<reco_obj.reco_ang<<std::endl;
 
@@ -242,9 +243,10 @@ void RunSEAview(bool graphEVD_SEAview = false, bool graphResponse = true, bool n
 			double firstbinylowedge = h[k] -> GetYaxis() -> GetBinLowEdge(firstbiny);
 			int lastbiny = h[k] -> FindLastBinAbove(0, 2);
 			double lastbinyhighedge = h[k] -> GetYaxis() -> GetBinLowEdge(lastbiny + 1);
-			h[k] -> GetXaxis() -> SetRangeUser(firstbinxlowedge, lastbinxhighedge);
-			h[k] -> GetYaxis() -> SetRangeUser(firstbinylowedge, lastbinyhighedge);
-			h[k] ->Draw("colz");
+			//h[k] -> GetXaxis() -> SetRangeUser(firstbinxlowedge, lastbinxhighedge);
+			//h[k] -> GetYaxis() -> SetRangeUser(firstbinylowedge, lastbinyhighedge);
+			h[k] -> SetFillStyle(0);
+			h[k] ->Draw("colz candlex(00012311)");
 			if(k == 0)
 				h[k] -> GetYaxis()->SetTitle("Reco e^{+}e^{-} Opening Angle [Deg]");
 			else
@@ -254,11 +256,13 @@ void RunSEAview(bool graphEVD_SEAview = false, bool graphResponse = true, bool n
 				SetRealAspectRatio(ch1, 1);
 				SetRealAspectRatio(ch1, 2);
 				ch1 ->SaveAs("Response.pdf(","pdf");
+				ch1 ->SaveAs("ch1.C");
 			}
 			else if(k == 4)
 				ch2 ->SaveAs("Response.pdf)","pdf");
+				ch2 ->SaveAs("ch2.C");
 			//ch -> SaveAs(("Response" + std::to_string(k) + ".pdf").c_str(), "pdf");
-			//h[k] ->SaveAs("Response.root","root");
+			h[k] ->SaveAs(("Response" + std::to_string(k) + ".C").c_str());
 	}}
 	return;
 
