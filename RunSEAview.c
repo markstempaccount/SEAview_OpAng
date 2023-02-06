@@ -4,7 +4,7 @@
 #include "SEAobject.h"
 #include "SetRealAspectRatio.h"
 
-void RunSEAview(double radius = 8.0, bool graphEVD_SEAview = false, bool graphResponse = true, bool normalizeResponse = false, double dist_2_true_max = 1.0, double min_rtang_diff = 0, int maxcnt = 1e6, double easymax = 0.9, double e_totmin = 0.1, bool iterateRadius = false, int loop = 1){
+void RunSEAview(double radius = 8.0, bool candles = true, bool subplots = false, bool graphEVD_SEAview = false, bool graphResponse = true, bool normalizeResponse = false, double dist_2_true_max = 1.0, double min_rtang_diff = 0, int maxcnt = 1e6, double easymax = 0.9, double e_totmin = 0.1, bool iterateRadius = false, int loop = 1){
 
 	//base directory the input files are in
 	std::string base_dir = "/pnfs/uboone/persistent/users/markross/Jan2022_gLEE_files/";
@@ -109,11 +109,16 @@ void RunSEAview(double radius = 8.0, bool graphEVD_SEAview = false, bool graphRe
 
 
 	//Make a Histogram to save the output 2D response
-	TH2D* h1 = new TH2D("True:Reco Opening Angle Response", "True:Reco Opening Angle Response",45,0,45,180,0,180);
-	TH2D* h2 = new TH2D("Num Tracks + Showers:Reco Opening Angle Error", "Num Tracks + Showers:Reco Opening Angle Error", 2, 1, 3, 200, -200, 200);
-	TH2D* h3 = new TH2D("E_max/E_total:Reco Opening Angle Error", "E_max/E_total:Reco Opening Angle Error", (int) std::round((easymax - 0.50)/0.01), 0.50, easymax, 200, -200, 200);
-	TH2D* h4 = new TH2D("True:Reco Opening Angle Error", "E_total:Reco Opening Angle Error", 45, 0, 45, 200, -200, 200);
-	TH2D* h5 = new TH2D("Reco Vertex Error:Reco Opening Angle Error", "Reco Vertex Error:Reco Opening Angle Error", dist_2_true_max/0.01, 0, dist_2_true_max, 200, -200, 200);
+	TH2D *h1 = new TH2D("h1", "True:Reco Opening Angle Response",45,0,45,180,0,180);
+	TH2D *h2absolute = new TH2D("h2absolute", "Num Tracks + Showers:Reco Opening Angle Error", 2, 1, 3, 225, -45, 180);
+	TH2D *h3absolute = new TH2D("h3absolute", "E_max/E_total:Reco Opening Angle Error", (int) std::round((easymax - 0.50)/0.01), 0.50, easymax, 225, -45, 180);
+	TH2D *h4absolute = new TH2D("h4absolute", "True:Reco Opening Angle Error", 45, 0, 45, 225, -45, 180);
+	TH2D *h5absolute = new TH2D("h5absolute", "Reco Vertex Error:Reco Opening Angle Error", 40, 0, dist_2_true_max, 225, -45, 180);
+	TH2D *h2percent = new TH2D("h2percent", "Num Tracks + Showers:Reco Opening Angle Error", 2, 1, 3, 100, -100, 200);
+	TH2D *h3percent = new TH2D("h3percent", "E_max/E_total:Reco Opening Angle Error", (int) std::round((easymax - 0.50)/0.01), 0.50, easymax, 100, -100, 200);
+	TH2D *h4percent = new TH2D("h4percent", "True:Reco Opening Angle Error", 45, 0, 45, 100, -100, 200);
+	TH2D *h5percent = new TH2D("h5percent", "Reco Vertex Error:Reco Opening Angle Error", 40, 0, dist_2_true_max, 100, -100, 200);
+
 //	TH2D *h6 = new TH2D("Radius:Reco Opening Angle Error", 
 
 	//some configuration bits
@@ -197,12 +202,17 @@ void RunSEAview(double radius = 8.0, bool graphEVD_SEAview = false, bool graphRe
 
 		//Fill output Th2D
 		if(graphResponse){
-			double percenterror = (reco_obj.reco_ang - true_opang)/true_opang;
 			h1 -> Fill(true_opang, reco_obj.reco_ang);
-			h2 -> Fill(num_reco_showers+num_reco_tracks, percenterror);
-			h3 -> Fill(easy, percenterror);
-			h4 -> Fill(true_opang, percenterror);
-			h5 -> Fill(dist_2_true, percenterror);
+			double absoluteerror = reco_obj.reco_ang - true_opang;
+			double percenterror = absoluteerror/true_opang*100;
+			h2absolute -> Fill(num_reco_showers+num_reco_tracks, absoluteerror);
+			h3absolute -> Fill(easy, absoluteerror);
+			h4absolute -> Fill(true_opang, absoluteerror);
+			h5absolute -> Fill(dist_2_true, absoluteerror);
+			h2percent -> Fill(num_reco_showers+num_reco_tracks, percenterror);
+			h3percent -> Fill(easy, percenterror);
+			h4percent -> Fill(true_opang, percenterror);
+			h5percent -> Fill(dist_2_true, percenterror);
 		}
 		std::cout<<"How did we do? True OpAng : "<<true_opang<<" Reco OpAng : "<<reco_obj.reco_ang<<std::endl;
 
@@ -212,12 +222,16 @@ void RunSEAview(double radius = 8.0, bool graphEVD_SEAview = false, bool graphRe
 
 	//Normalize the TH2D into a respsonse matrix.
 	if(graphResponse){
-		TH2D* h[5] = {h1, h2, h3, h4, h5};
-		std::string xlabel[5] = {"Reco e^{+}e^{-} Opening Angle [Deg]", "Number of Tracks + Showers", "E_max/E_total", "E_total [GeV]", "Vertex Error [cm]"}; //Is Vertex error actually in cm?
+		TH2D* h[9] = {h1, h2absolute, h2percent, h3absolute, h3percent, h4absolute, h4percent, h5absolute, h5percent};
+		std::string xlabel[5] = {"True e^{+}e^{-} Opening Angle [Deg]", "Number of Tracks + Showers", "E_max/E_total", "True e^{+}e^{-} Opening Angle [Deg]", "Vertex Error [cm]"}; //Is Vertex error actually in cm?
 		TCanvas *ch1 = new TCanvas();
 		TCanvas *ch2 = new TCanvas("ch2", "ch2", 3000, 2400);
-		ch2 -> Divide(2, 2);
-		for(int k = 0; k < 5; k++){
+		TCanvas *ch3 = new TCanvas("ch3", "ch3", 3000, 2400);
+		if(subplots){
+			ch2 -> Divide(2, 2);
+			ch3 -> Divide(2, 2);
+		}
+		for(int k = 0; k < 9; k++){
 			if(normalizeResponse){
 				std::vector<double> norms;
 				for(int i=0; i<=h[k] ->GetNbinsX(); i++){
@@ -234,8 +248,16 @@ void RunSEAview(double radius = 8.0, bool graphEVD_SEAview = false, bool graphRe
 				}}
 
 			ch1 -> cd();
-			if(k != 0)
-				ch2 -> cd(k);
+			if(k != 0){
+				if(subplots){
+					if(k%2)
+						ch2 -> cd((int) k/2.0 + 0.5);
+					else
+						ch3 -> cd((int) k/2.0);
+				}
+				else
+					ch3 -> cd();
+			}
 			double firstbinxlowedge = h[k] -> GetXaxis() -> GetBinLowEdge(1);
 			int lastbinx = h[k] -> FindLastBinAbove(0, 1);
 			double lastbinxhighedge = h[k] -> GetXaxis() -> GetBinLowEdge(lastbinx + 1);
@@ -243,24 +265,44 @@ void RunSEAview(double radius = 8.0, bool graphEVD_SEAview = false, bool graphRe
 			double firstbinylowedge = h[k] -> GetYaxis() -> GetBinLowEdge(firstbiny);
 			int lastbiny = h[k] -> FindLastBinAbove(0, 2);
 			double lastbinyhighedge = h[k] -> GetYaxis() -> GetBinLowEdge(lastbiny + 1);
-			//h[k] -> GetXaxis() -> SetRangeUser(firstbinxlowedge, lastbinxhighedge);
-			//h[k] -> GetYaxis() -> SetRangeUser(firstbinylowedge, lastbinyhighedge);
+			h[k] -> GetXaxis() -> SetRangeUser(firstbinxlowedge, lastbinxhighedge);
+			h[k] -> GetYaxis() -> SetRangeUser(firstbinylowedge, lastbinyhighedge);
 			h[k] -> SetFillStyle(0);
-			h[k] ->Draw("colz candlex(00012311)");
+			h[k] -> SetLineColor(2);
+			h[k] -> SetLineWidth(1);
+			if(candles){
+				h[k] ->Draw("colz candlex(00000311)");
+				//h[k] ->Draw("colz");
+				//TProfile *p = h[k] -> ProfileX("p", 1, -1, "s");
+				//p -> Draw("same");
+			}
+			else
+				h[k] -> Draw("colz");
 			if(k == 0)
 				h[k] -> GetYaxis()->SetTitle("Reco e^{+}e^{-} Opening Angle [Deg]");
-			else
+			else if(k%2)
 				h[k] -> GetYaxis() -> SetTitle("Reco e^{+}e^{-} Opening Angle Error [Deg]");
-			h[k] ->GetXaxis()->SetTitle(xlabel[k].c_str());
+			else
+				h[k] -> GetYaxis() -> SetTitle("Reco e^{+}e^{-} Opening Angle Error [%]");
+			h[k] ->GetXaxis()->SetTitle(xlabel[(int) (k/2.0 + 0.5)].c_str());
 			if(k == 0){
 				SetRealAspectRatio(ch1, 1);
 				SetRealAspectRatio(ch1, 2);
 				ch1 ->SaveAs("Response.pdf(","pdf");
 				ch1 ->SaveAs("ch1.C");
 			}
-			else if(k == 4)
-				ch2 ->SaveAs("Response.pdf)","pdf");
-				ch2 ->SaveAs("ch2.C");
+			else if(k == 8){
+				ch3 ->SaveAs("Response.pdf)","pdf");
+				ch3 ->SaveAs("ch3.C");
+			}
+			else if(!subplots){
+				ch3 ->SaveAs("Response.pdf", "pdf");
+				ch3 ->SaveAs("ch3.C");
+			}
+			else if(k == 7){
+				ch2 -> SaveAs("Response.pdf", "pdf");
+				ch2 -> SaveAs("ch2.C");
+			}
 			//ch -> SaveAs(("Response" + std::to_string(k) + ".pdf").c_str(), "pdf");
 			h[k] ->SaveAs(("Response" + std::to_string(k) + ".C").c_str());
 	}}
