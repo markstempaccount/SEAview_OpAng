@@ -17,8 +17,8 @@ void RunSEAview(double radius = 8.0, bool candles = true, bool subplots = false,
 	//h6 are histograms of error vs. radius. Only used if iterating through radii but must be declared regardless to have sufficient scope.
 	TH2D *h6absolute, *h6percent;
 	if(iterateRadius){
-		h6absolute = new TH2D("h6absolute", "Radius:Reco Opening Angle Error", (int) ((maxradius - radius)/radiusInterval), radius, maxradius, 225, -45, 180);
-		h6percent = new TH2D("h6percent", "Radius:Reco Opening Angle Error", (int) ((maxradius - radius)/radiusInterval), radius, maxradius, 100, -100, 200);
+		h6absolute = new TH2D("h6absolute", "Radius:Reco Opening Angle Error", (int) ((maxradius - radius)/radiusInterval) + 1, radius - radiusInterval/2, maxradius + radiusInterval/2, 225, -45, 180);
+		h6percent = new TH2D("h6percent", "Radius:Reco Opening Angle Error", (int) ((maxradius - radius)/radiusInterval) + 1, radius - radiusInterval/2, maxradius + radiusInterval/2, 100, -100, 200);
 	}
 
 	while(radius <= maxradius){
@@ -143,11 +143,11 @@ void RunSEAview(double radius = 8.0, bool candles = true, bool subplots = false,
 
 		//Make Histograms to show relation between reco opening angle error and various reco and true parameters.
 		TH2D *h1 = new TH2D("h1", "True:Reco Opening Angle Response",45,0,45,180,0,180);
-		TH2D *h2absolute = new TH2D("h2absolute", "Num Tracks + Showers:Reco Opening Angle Error", 2, 1, 3, 225, -45, 180);
+		TH2D *h2absolute = new TH2D("h2absolute", "Num Tracks + Showers:Reco Opening Angle Error", 2, 0.5, 2.5, 225, -45, 180);
 		TH2D *h3absolute = new TH2D("h3absolute", "E_max/E_total:Reco Opening Angle Error", (int) std::round((easymax - 0.50)/0.01), 0.50, easymax, 225, -45, 180);
 		TH2D *h4absolute = new TH2D("h4absolute", "True:Reco Opening Angle Error", 45, 0, 45, 225, -45, 180);
 		TH2D *h5absolute = new TH2D("h5absolute", "Reco Vertex Error:Reco Opening Angle Error", 40, 0, dist_2_true_max, 225, -45, 180);
-		TH2D *h2percent = new TH2D("h2percent", "Num Tracks + Showers:Reco Opening Angle Error", 2, 1, 3, 100, -100, 200);
+		TH2D *h2percent = new TH2D("h2percent", "Num Tracks + Showers:Reco Opening Angle Error", 2, 0.5, 2.5, 100, -100, 200);
 		TH2D *h3percent = new TH2D("h3percent", "E_max/E_total:Reco Opening Angle Error", (int) std::round((easymax - 0.50)/0.01), 0.50, easymax, 100, -100, 200);
 		TH2D *h4percent = new TH2D("h4percent", "True:Reco Opening Angle Error", 45, 0, 45, 100, -100, 200);
 		TH2D *h5percent = new TH2D("h5percent", "Reco Vertex Error:Reco Opening Angle Error", 40, 0, dist_2_true_max, 100, -100, 200);
