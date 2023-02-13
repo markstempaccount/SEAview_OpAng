@@ -4,7 +4,7 @@
 #include "SEAobject.h"
 #include "SetRealAspectRatio.h"
 
-void RunSEAview(double radius = 8.0, bool candles = true, bool subplots = false, bool graphEVD_SEAview = false, bool graphResponse = true, bool normalizeResponse = false, double dist_2_true_max = 1.0, double min_rtang_diff = 0, int maxcnt = 1e6, double easymax = 0.9, double e_totmin = 0.1, bool iterateRadius = false, double radiusInterval = 0.1, double maxradius = 0){
+void RunSEAview(double radius = 6.0, bool candles = true, bool subplots = false, bool graphEVD_SEAview = false, bool graphResponse = true, bool normalizeResponse = false, double dist_2_true_max = 1.0, double min_rtang_diff = 0, int maxcnt = 1e6, double easymax = 0.9, double e_totmin = 0.1, bool iterateRadius = false, double radiusInterval = 0.1, double maxradius = 0){
 
 	//If not iterating radius, set maxradius to current radius so main loop only runs once.
 	if(!iterateRadius)
@@ -28,7 +28,7 @@ void RunSEAview(double radius = 8.0, bool candles = true, bool subplots = false,
 		//std::string base_dir = "/home/mark/work/uBooNE/EplusEmin_Retreat2022_Master/files/";
 		
 		//Parent directory of data director(y/ies)
-		std::string work_dir = "/uboone/app/users/ltong/eplus_eminus_studies_2023/SEAview_OpAng";
+		std::string work_dir = "/uboone/app/users/ltong/eplus_eminus_studies_2023/SEAview_OpAng/wirecell";
 
 		//Data directory. Keeps output from different radii separate, which is useful if iterating. Unfortunately, requires regenerating dictionaries for each radius.
 		std::string response_dir = (std::to_string(radius));			
@@ -45,6 +45,9 @@ void RunSEAview(double radius = 8.0, bool candles = true, bool subplots = false,
 
 		//Grab the TTrees associated with the gLEE Ntuples (automatically friends the necessary bits internally). Function in plothelper.h simple and quick. 
 		TTree *v = (TTree*)loadgLEE(base_dir+"vertex_Isotropic_EpEm_Batch1_v50.5_SP.root", "singlephotonana");
+		TFile *fWC = new TFile("/uboone/app/users/markrl/EplusEminus/match_WC_pan/matched_WC_spacepoints_v2.root", "READ");
+		TTree *w = (TTree*) fWC -> Get("wc_friend");
+		v -> AddFriend(w);
 
 		//Create some dictionaryies so root can read vectors of vectors. Not strictly needed but safer. 
 		gInterpreter->GenerateDictionary("std::vector<std::vector<int> >", "vector");
@@ -66,6 +69,12 @@ void RunSEAview(double radius = 8.0, bool candles = true, bool subplots = false,
 		v->SetBranchAddress("reco_track_spacepoint_x",&reco_track_spacepoint_x);
 		v->SetBranchAddress("reco_track_spacepoint_y",&reco_track_spacepoint_y);
 		v->SetBranchAddress("reco_track_spacepoint_z",&reco_track_spacepoint_z);
+		std::vector<double> *reco_wc_spacepoint_x =0;
+                std::vector<double> *reco_wc_spacepoint_y =0;
+                std::vector<double> *reco_wc_spacepoint_z =0;
+                v->SetBranchAddress("wc_sps_x",&reco_wc_spacepoint_x);
+                v->SetBranchAddress("wc_sps_y",&reco_wc_spacepoint_y);
+                v->SetBranchAddress("wc_sps_z",&reco_wc_spacepoint_z);
 
 		//Some vectors to store the 2D recob::Hits. The Wire number, the plane (0,1 or 2), the energy and the peak time tick
 		std::vector<std::vector<int>> *reco_shower_hit_wire = 0;
@@ -92,11 +101,13 @@ void RunSEAview(double radius = 8.0, bool candles = true, bool subplots = false,
 		int run_number = 0;
 		int subrun_number = 0;
 		int event_number = 0;
+		int in_wirecell = 0;
 		v->SetBranchAddress("reco_asso_showers",&num_reco_showers);
 		v->SetBranchAddress("reco_asso_tracks",&num_reco_tracks);
 		v->SetBranchAddress("run_number",&run_number);
 		v->SetBranchAddress("subrun_number",&subrun_number);
 		v->SetBranchAddress("event_number",&event_number);
+		v->SetBranchAddress("in_wc", &in_wirecell);
 
 		//If you want to make complex formula from many TTree branches, using SetBranchAddress becomes tedious. 
 		//So we can also access more complex formula directly via TTreeFormula and not individual branches (often betteir)
@@ -166,6 +177,8 @@ void RunSEAview(double radius = 8.0, bool candles = true, bool subplots = false,
 			v->GetEntry(i);
 			if(i%500==0)std::cout<<i<<"/"<<v->GetEntries()<<std::endl;
 
+			if(!in_wirecell || reco_wc_spacepoint_x->size()==0 ) continue;
+
 			//Right now focus on 2 object collections
 			if((num_reco_showers+num_reco_tracks==0) || (num_reco_showers+num_reco_tracks>2)) continue;
 
@@ -196,6 +209,7 @@ void RunSEAview(double radius = 8.0, bool candles = true, bool subplots = false,
 			//Build up a vector of "Objects", tracks showers and unassociated hits
 			std::vector<SEAobject> objs;
 
+			if(false){
 			std::cout<<"Starting to set up "<<num_reco_showers<<" ( "<<reco_shower_spacepoint_z->size()<<" ) showers and "<<num_reco_tracks<<" ( "<<reco_track_spacepoint_z->size()<<" ) tracks . in event "<<i<<std::endl;
 			//showers
 			for(int s=0; s< num_reco_showers; s++){
@@ -211,6 +225,16 @@ void RunSEAview(double radius = 8.0, bool candles = true, bool subplots = false,
 				objs.emplace_back(1,cols[objs.size()], reco_track_hit_wire->at(t), reco_track_hit_plane->at(t), reco_track_hit_tick->at(t), reco_track_hit_energy->at(t), reco_track_spacepoint_x->at(t), reco_track_spacepoint_y->at(t), reco_track_spacepoint_z->at(t));
 				objs.back().print();
 			}
+			}else{
+
+				if(reco_shower_hit_wire->size()==0){
+					objs.emplace_back(1, cols[0], reco_track_hit_wire->at(0), reco_track_hit_plane->at(0), reco_track_hit_tick->at(0), reco_track_hit_energy->at(0), *reco_wc_spacepoint_x, *reco_wc_spacepoint_y, *reco_wc_spacepoint_z);
+				}else{
+					objs.emplace_back(1, cols[0], reco_shower_hit_wire->at(0), reco_shower_hit_plane->at(0), reco_shower_hit_tick->at(0), reco_shower_hit_energy->at(0), *reco_wc_spacepoint_x, *reco_wc_spacepoint_y, *reco_wc_spacepoint_z);
+				}
+
+
+			}
 
 
 			//double reco_ang = 0;
@@ -220,7 +244,7 @@ void RunSEAview(double radius = 8.0, bool candles = true, bool subplots = false,
 			std::vector<std::string> vals = {  to_string_prec(true_opang,1),to_string_prec( std::max(f_true_ep_E->EvalInstance(), f_true_em_E->EvalInstance())/(f_true_em_E->EvalInstance()+f_true_ep_E->EvalInstance())  ,2),to_string_prec(f_true_em_E->EvalInstance()+f_true_ep_E->EvalInstance(),3),std::to_string(num_reco_tracks),std::to_string(num_reco_showers)};
 
 			//And do the cal does calculation and plots
-			SEAviewer reco_obj (objs, reco_vertex_3D, reco_vertex_2D, true_vertex, "bad_vertex_"+std::to_string(subrun_number)+"_"+std::to_string(event_number), tags, vals, radius); 
+			SEAviewer reco_obj (objs, reco_vertex_3D, reco_vertex_2D, true_vertex, ""+std::to_string(subrun_number)+"_"+std::to_string(event_number), tags, vals, radius); 
 			reco_obj.reco_ang_calc();
 
 			//Whether or not to graph individual events.
