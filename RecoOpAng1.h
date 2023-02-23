@@ -91,7 +91,7 @@ struct SumPlaneDistance2 {
        double sum = 0;
        for (int i  = 0; i < npoints; ++i) {
           double d = distance2(x[i],y[i],z[i],par);
-          sum += d;
+          sum += d*d;
        }
        if (first) {
           std::cout << "Total Initial distance square = " << sum << std::endl;
@@ -227,18 +227,18 @@ double recoOpAng1(std::vector<double> start_point,   std::vector<double> shower_
 
 //    g3D->Draw("p0");
 
-
-    TGraph2D * evdRecoStartPoint = new TGraph2D( (std::to_string(start_point[0])+std::to_string(shower_point_x[0]*shower_point_y[0])+"RecpSP").c_str(),"",1,&(null_point)[0], &(null_point)[1], &(null_point)[2]);
+//Plot the origin
+    TGraph2D * origin = new TGraph2D( (std::to_string(start_point[0])+std::to_string(shower_point_x[0]*shower_point_y[0])+"RecpSP").c_str(),"",1,&(null_point)[0], &(null_point)[1], &(null_point)[2]);
 //    evdRecoStartPoint->Draw("same p");
-    evdRecoStartPoint->SetMarkerStyle(29);
-    evdRecoStartPoint->SetMarkerSize(5);
-    evdRecoStartPoint->SetMarkerColor(kMagenta);
+    origin->SetMarkerStyle(29);
+    origin->SetMarkerSize(5);
+    origin->SetMarkerColor(kMagenta);
 
 
     bool ok = fitter.FitFCN();
     if (!ok) {
         Error("line3Dfit","Line3D Fit failed");
-        return 1;
+        return -9995;
     }
 
     const ROOT::Fit::FitResult & result = fitter.Result();
@@ -292,7 +292,7 @@ double recoOpAng1(std::vector<double> start_point,   std::vector<double> shower_
     bool pok = planefitter.FitFCN();
     if (!pok) {
         Error("Plane3Dfit","Plane3D Fit failed");
-        return 1;
+        return -9996;
     }
 
     const ROOT::Fit::FitResult & planeresult = planefitter.Result();
@@ -365,7 +365,7 @@ double recoOpAng1(std::vector<double> start_point,   std::vector<double> shower_
     bool leftok = leftfitter.FitFCN();
     if (!leftok) {
         Error("LEFTfit","LEFT Line3D Fit failed");
-        return 1;
+        return -9997;
     }
     const ROOT::Fit::FitResult & leftresult = leftfitter.Result();
     const double * leftparFit = leftresult.GetParams();
@@ -379,8 +379,8 @@ double recoOpAng1(std::vector<double> start_point,   std::vector<double> shower_
     rightfitter.SetFCN(rightfcn,rightStart);
     bool rightok = rightfitter.FitFCN();
     if (!rightok) {
-        Error("LEFTfit","LEFT Line3D Fit failed");
-        return 1;
+        Error("RIGHTfit","RIGHT Line3D Fit failed");
+        return -9998;
     }
     const ROOT::Fit::FitResult & rightresult = rightfitter.Result();
     const double * rightparFit = rightresult.GetParams();
