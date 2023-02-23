@@ -4,7 +4,7 @@
 #include "SEAobject.h"
 #include "SetRealAspectRatio.h"
 
-void RunSEAview(double radius = 6.0, bool candles = true, bool subplots = false, bool graphEVD_SEAview = false, bool graphResponse = true, bool normalizeResponse = false, double dist_2_true_max = 1.0, double min_rtang_diff = 0, int maxcnt = 1e6, double easymax = 0.9, double e_totmin = 0.1, bool iterateRadius = false, double radiusInterval = 0.1, double maxradius = 0){
+void RunSEAview(double radius = 10.5, bool candles = true, bool subplots = false, bool graphEVD_SEAview = false, bool graphResponse = true, bool normalizeResponse = false, double dist_2_true_max = 1.0, double min_rtang_diff = 0, int maxcnt = 1e6, double easymax = 0.9, double e_totmin = 0.1, bool iterateRadius = false, double radiusInterval = 0.1, double maxradius = 0){
 
 	//If not iterating radius, set maxradius to current radius so main loop only runs once.
 	if(!iterateRadius)
@@ -135,6 +135,10 @@ void RunSEAview(double radius = 6.0, bool candles = true, bool subplots = false,
 		TTreeFormula* f_true_vertex_x = new TTreeFormula("true_vertex_x","Alt$(sim_shower_start_x[0],Min$(sim_track_startx))",v);
 		TTreeFormula* f_true_vertex_y = new TTreeFormula("true_vertex_y","Alt$(sim_shower_start_y[0],Min$(sim_track_starty))",v);
 		TTreeFormula* f_true_vertex_z = new TTreeFormula("true_vertex_z","Alt$(sim_shower_start_z[0],Min$(sim_track_startz))",v);
+		//TTreeFormula* f_true_vertex_x = new TTreeFormula("true_vertex_x","mctruth_daughters_startx[0]",v);
+		//TTreeFormula* f_true_vertex_y = new TTreeFormula("true_vertex_y","mctruth_daughters_starty[0]",v);
+		//TTreeFormula* f_true_vertex_z = new TTreeFormula("true_vertex_z","mctruth_daughters_startz[0]",v);
+
 
 		//True Direction of eplus and eminus (unit vectors)
 		TTreeFormula* f_true_ep_dir_x = new TTreeFormula("true_eplus_dir_x","mctruth_daughters_px[0]/sqrt(pow(mctruth_daughters_px[0],2)+pow(mctruth_daughters_py[0],2)+pow(mctruth_daughters_pz[0],2))",v);
@@ -153,11 +157,11 @@ void RunSEAview(double radius = 6.0, bool candles = true, bool subplots = false,
 
 
 		//Make Histograms to show relation between reco opening angle error and various reco and true parameters.
-		TH2D *h1 = new TH2D("h1", "True:Reco Opening Angle Response",45,0,45,180,0,180);
-		TH2D *h2absolute = new TH2D("h2absolute", "Num Tracks + Showers:Reco Opening Angle Error", 2, 0.5, 2.5, 225, -45, 180);
-		TH2D *h3absolute = new TH2D("h3absolute", "E_max/E_total:Reco Opening Angle Error", (int) std::round((easymax - 0.50)/0.01), 0.50, easymax, 225, -45, 180);
-		TH2D *h4absolute = new TH2D("h4absolute", "True:Reco Opening Angle Error", 45, 0, 45, 225, -45, 180);
-		TH2D *h5absolute = new TH2D("h5absolute", "Reco Vertex Error:Reco Opening Angle Error", 40, 0, dist_2_true_max, 225, -45, 180);
+		TH2D *h1 = new TH2D("h1", "True:Reco Opening Angle Response",45,0,45,90,0,90);
+		TH2D *h2absolute = new TH2D("h2absolute", "Num Tracks + Showers:Reco Opening Angle Error", 2, 0.5, 2.5, 135, -45, 90);
+		TH2D *h3absolute = new TH2D("h3absolute", "E_max/E_total:Reco Opening Angle Error", (int) std::round((easymax - 0.50)/0.01), 0.50, easymax, 135, -45, 90);
+		TH2D *h4absolute = new TH2D("h4absolute", "True:Reco Opening Angle Error", 45, 0, 45, 135, -45, 90);
+		TH2D *h5absolute = new TH2D("h5absolute", "Reco Vertex Error:Reco Opening Angle Error", 40, 0, dist_2_true_max, 135, -45, 90);
 		TH2D *h2percent = new TH2D("h2percent", "Num Tracks + Showers:Reco Opening Angle Error", 2, 0.5, 2.5, 100, -100, 200);
 		TH2D *h3percent = new TH2D("h3percent", "E_max/E_total:Reco Opening Angle Error", (int) std::round((easymax - 0.50)/0.01), 0.50, easymax, 100, -100, 200);
 		TH2D *h4percent = new TH2D("h4percent", "True:Reco Opening Angle Error", 45, 0, 45, 100, -100, 200);
@@ -180,7 +184,7 @@ void RunSEAview(double radius = 6.0, bool candles = true, bool subplots = false,
 			if(!in_wirecell || reco_wc_spacepoint_x->size()==0 ) continue;
 
 			//Right now focus on 2 object collections
-			if((num_reco_showers+num_reco_tracks==0) || (num_reco_showers+num_reco_tracks>2)) continue;
+			if((num_reco_showers == 0) || (num_reco_showers+num_reco_tracks>2)) continue;
 
 			//This is necessary to get around a bug in root to do with vectors in TTrees. Call GetNdata() before evaluating TTreeFormula. 
 			for(auto &f: forms) f->GetNdata();
@@ -227,10 +231,15 @@ void RunSEAview(double radius = 6.0, bool candles = true, bool subplots = false,
 			}
 			}else{
 
-				if(reco_shower_hit_wire->size()==0){
+				if(reco_track_hit_wire->size()!=0){
 					objs.emplace_back(1, cols[0], reco_track_hit_wire->at(0), reco_track_hit_plane->at(0), reco_track_hit_tick->at(0), reco_track_hit_energy->at(0), *reco_wc_spacepoint_x, *reco_wc_spacepoint_y, *reco_wc_spacepoint_z);
-				}else{
+				}else if(reco_track_hit_wire->size()!=0){
 					objs.emplace_back(1, cols[0], reco_shower_hit_wire->at(0), reco_shower_hit_plane->at(0), reco_shower_hit_tick->at(0), reco_shower_hit_energy->at(0), *reco_wc_spacepoint_x, *reco_wc_spacepoint_y, *reco_wc_spacepoint_z);
+				}else {
+					std::vector<int> tmpi = {0};
+					std::vector<double> tmpd ={0};
+					objs.emplace_back(1, cols[0], tmpi,tmpi,tmpd,tmpd, *reco_wc_spacepoint_x, *reco_wc_spacepoint_y, *reco_wc_spacepoint_z);
+
 				}
 
 
@@ -245,6 +254,7 @@ void RunSEAview(double radius = 6.0, bool candles = true, bool subplots = false,
 
 			//And do the cal does calculation and plots
 			SEAviewer reco_obj (objs, reco_vertex_3D, reco_vertex_2D, true_vertex, ""+std::to_string(subrun_number)+"_"+std::to_string(event_number), tags, vals, radius); 
+			//SEAviewer reco_obj (objs, true_vertex, reco_vertex_2D, true_vertex, "fixed_plane_fit_"+std::to_string(subrun_number)+"_"+std::to_string(event_number), tags, vals, radius); 
 			reco_obj.reco_ang_calc();
 
 			//Whether or not to graph individual events.
@@ -286,9 +296,10 @@ void RunSEAview(double radius = 6.0, bool candles = true, bool subplots = false,
 
 		//Normalize (or not) the TH2D into a respsonse matrix.
 		if(graphResponse){
+			std::string fResponsename = "ResponseFixedPlaneFit";
 			TH2D* h[9] = {h1, h2absolute, h2percent, h3absolute, h3percent, h4absolute, h4percent, h5absolute, h5percent};
 			std::string xlabel[5] = {"True e^{+}e^{-} Opening Angle [Deg]", "Number of Tracks + Showers", "E_max/E_total", "True e^{+}e^{-} Opening Angle [Deg]", "Vertex Error [cm]"}; //Is Vertex error actually in cm?
-			TFile *fResponse = new TFile("fResponse.root", "RECREATE");
+			TFile *fResponse = new TFile((fResponsename + ".root").c_str(), "RECREATE");
 			fResponse -> cd();
 			gDirectory -> mkdir(response_dir.c_str());
 			fResponse -> cd(response_dir.c_str());
@@ -334,7 +345,7 @@ void RunSEAview(double radius = 6.0, bool candles = true, bool subplots = false,
 				int lastbiny = h[k] -> FindLastBinAbove(0, 2);
 				double lastbinyhighedge = h[k] -> GetYaxis() -> GetBinLowEdge(lastbiny + 1);
 				h[k] -> GetXaxis() -> SetRangeUser(firstbinxlowedge, lastbinxhighedge);
-				h[k] -> GetYaxis() -> SetRangeUser(firstbinylowedge, lastbinyhighedge);
+				//h[k] -> GetYaxis() -> SetRangeUser(firstbinylowedge, lastbinyhighedge);
 				h[k] -> SetFillStyle(0);
 				h[k] -> SetLineColor(2);
 				h[k] -> SetLineWidth(1);
@@ -357,25 +368,25 @@ void RunSEAview(double radius = 6.0, bool candles = true, bool subplots = false,
 					SetRealAspectRatio(ch1, 1);
 					SetRealAspectRatio(ch1, 2);
 					ch1 ->Write();
-					ch1 ->SaveAs("Response.pdf(", "pdf");
+					ch1 ->SaveAs((fResponsename + ".pdf(").c_str(), "pdf");
 					ch1 ->SaveAs("ch1.C");
 				}
 				else if(k == 8){
 					ch3 ->Write();
-					ch3 -> SaveAs("Response.pdf)", "pdf");
+					ch3 -> SaveAs((fResponsename + ".pdf)").c_str(), "pdf");
 					ch3 ->SaveAs("ch3.C");
 				}
 				else if(!subplots){
 					ch3 ->Write();
-					ch3 -> SaveAs("Response.pdf", "pdf");
+					ch3 -> SaveAs((fResponsename + ".pdf").c_str(), "pdf");
 					ch3 ->SaveAs("ch3.C");
 				}
 				else if(k == 7){
 					ch2 -> Write();
-					ch3 -> SaveAs("Response.pdf", "pdf");
+					ch3 -> SaveAs((fResponsename + ".pdf").c_str(), "pdf");
 					ch2 -> SaveAs("ch2.C");
 				}
-				h[k] ->SaveAs(("Response" + std::to_string(k) + ".C").c_str());
+				h[k] ->SaveAs((fResponsename + std::to_string(k) + ".C").c_str());
 		}}
 		gSystem -> cd(work_dir.c_str());
 		radius += radiusInterval;
@@ -417,9 +428,9 @@ void RunSEAview(double radius = 6.0, bool candles = true, bool subplots = false,
 				h[k] -> GetYaxis() -> SetTitle("Reco e^{+}e^{-} Opening Angle Error [%]");
 			h[k] -> GetXaxis() ->SetTitle("Radius of Reco Circle (cm)");
 			if(k == 0)
-				ch -> SaveAs("Radius.pdf(", "pdf");
+				ch -> SaveAs("RadiusFixedPlaneFit.pdf(", "pdf");
 			else
-				ch -> SaveAs("Radius.pdf)", "pdf");
+				ch -> SaveAs("RadiusFixedPlaneFit.pdf)", "pdf");
 		}}
 	return;
 
