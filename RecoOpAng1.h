@@ -202,12 +202,10 @@ double recoOpAng1(std::vector<double> start_point,   std::vector<double> shower_
     for(auto &y: shower_point_y) y-=start_point[1];
     for(auto &z: shower_point_z) z-=start_point[2];
 
+    TRandom3 rangan(0);
+    std::string rstr = std::to_string(rangan.Uniform(10000000));
 
-    TGraph2D *g3D = new TGraph2D((std::to_string(start_point[0])+std::to_string(shower_point_x[0]*shower_point_y[0])).c_str(),"",N_pts, &(shower_point_x)[0], &(shower_point_y)[0], &(shower_point_z)[0]);
-    g3D->SetMarkerSize(2);
-    g3D->SetMarkerStyle(20);
-    //g3D->Fit("pol1");
-    //g3D->Draw("ap"); 
+    TGraph2D *g3D = new TGraph2D((rstr+std::to_string(start_point[0])+std::to_string(shower_point_x[0]*shower_point_y[0])).c_str(),"",N_pts, &(shower_point_x)[0], &(shower_point_y)[0], &(shower_point_z)[0]);
 
     ROOT::Fit::Fitter  fitter;
     
@@ -225,15 +223,9 @@ double recoOpAng1(std::vector<double> start_point,   std::vector<double> shower_
     // set step sizes different than default ones (0.3 times parameter values)
 //    for (int i = 0; i < 4; ++i) fitter.Config().ParSettings(i).SetStepSize(0.1);
 
-//    g3D->Draw("p0");
 
 //Plot the origin
-    TGraph2D * origin = new TGraph2D( (std::to_string(start_point[0])+std::to_string(shower_point_x[0]*shower_point_y[0])+"RecpSP").c_str(),"",1,&(null_point)[0], &(null_point)[1], &(null_point)[2]);
-//    evdRecoStartPoint->Draw("same p");
-    origin->SetMarkerStyle(29);
-    origin->SetMarkerSize(5);
-    origin->SetMarkerColor(kMagenta);
-
+    TGraph2D * origin = new TGraph2D( (rstr+std::to_string(start_point[0])+std::to_string(shower_point_x[0]*shower_point_y[0])+"RecpSP").c_str(),"",1,&(null_point)[0], &(null_point)[1], &(null_point)[2]);
 
     bool ok = fitter.FitFCN();
     if (!ok) {
@@ -250,35 +242,6 @@ double recoOpAng1(std::vector<double> start_point,   std::vector<double> shower_
     // get fit parameters
     const double * parFit = result.GetParams();
    
-
-      /*
-    std::vector<double> parFit2 = {parFit[0],parFit[1]};
-    parFit2[1]=parFit2[1]-TMath::Pi();
-
-    // draw the fitted line
-    int n = 1000;
-    double t0 = 0.0;
-    double dt = 5.0;
-    TPolyLine3D *l = new TPolyLine3D(n);
-    TPolyLine3D *l2 = new TPolyLine3D(n);
-    for (int i = -n; i <n;++i) {
-        double t = t0+ dt*i/n;
-        double x,y,z;
-        line(t,parFit,x,y,z);
-        l->SetPoint(i,x,y,z);
-        line(t,&(parFit2)[0],x,y,z);
-        l2->SetPoint(i,x,y,z);
-    }
-    l->SetLineColor(kBlack);
-    l->SetLineWidth(2);
-    l->Draw("same");
-    l2->SetLineColor(kBlack);
-    l2->SetLineWidth(2);
-    l2->Draw("same");
-        */
-    //getLine(parFit,kBlack);
-
-
     //Now fit a plane. 
 
     ROOT::Fit::Fitter  planefitter;
@@ -335,17 +298,9 @@ double recoOpAng1(std::vector<double> start_point,   std::vector<double> shower_
     }
 
     std::cout<<" Left: "<<left_x.size()<<" Right: "<<right_x.size()<<std::endl;
-    TGraph2D *left3D = new TGraph2D((std::to_string(start_point[0])+std::to_string(shower_point_x[0]*shower_point_y[0])+"left3D").c_str(),"",left_x.size(), &(left_x)[0], &(left_y)[0], &(left_z)[0]);
-    left3D->SetMarkerSize(2);
-    left3D->SetMarkerStyle(20);
-    left3D->SetMarkerColor(kRed-6);
-//    left3D->Draw("p same");
+    TGraph2D *left3D = new TGraph2D((rstr+std::to_string(start_point[0])+std::to_string(shower_point_x[0]*shower_point_y[0])+"left3D").c_str(),"",left_x.size(), &(left_x)[0], &(left_y)[0], &(left_z)[0]);
 
-    TGraph2D *right3D = new TGraph2D((std::to_string(start_point[0])+std::to_string(shower_point_x[0]*shower_point_y[0])+"right3D").c_str(),"",right_x.size(), &(right_x)[0], &(right_y)[0], &(right_z)[0]);
-    right3D->SetMarkerSize(2);
-    right3D->SetMarkerStyle(20);
-    right3D->SetMarkerColor(kBlue-6);
-//    right3D->Draw("p same");
+    TGraph2D *right3D = new TGraph2D((rstr+std::to_string(start_point[0])+std::to_string(shower_point_x[0]*shower_point_y[0])+"right3D").c_str(),"",right_x.size(), &(right_x)[0], &(right_y)[0], &(right_z)[0]);
    
     
     out_graphs2D.emplace_back(left_x.size(), &(left_x)[0], &(left_y)[0]);
@@ -363,7 +318,7 @@ double recoOpAng1(std::vector<double> start_point,   std::vector<double> shower_
     double leftStart[2] = {0,0};
     leftfitter.SetFCN(leftfcn,leftStart);
     bool leftok = leftfitter.FitFCN();
-    if (!leftok) {
+    if (!leftok || left_x.size() == 0) {
         Error("LEFTfit","LEFT Line3D Fit failed");
         return -9997;
     }
@@ -378,7 +333,7 @@ double recoOpAng1(std::vector<double> start_point,   std::vector<double> shower_
     double rightStart[2] = {0,0};
     rightfitter.SetFCN(rightfcn,rightStart);
     bool rightok = rightfitter.FitFCN();
-    if (!rightok) {
+    if (!rightok || right_x.size() == 0) {
         Error("RIGHTfit","RIGHT Line3D Fit failed");
         return -9998;
     }
@@ -399,6 +354,12 @@ double recoOpAng1(std::vector<double> start_point,   std::vector<double> shower_
 
     if(reco_ang > 90) reco_ang = 180.0-reco_ang;
     std::cout<<"THE FINAL ANSWER is : "<<reco_ang<<std::endl;
+
+    if(left3D==NULL)std::cout<<"Null "<<left3D<<" "<<right3D<<std::endl;
+    delete origin;
+    delete g3D;
+    delete left3D;
+    delete right3D;
 
     return reco_ang;
 

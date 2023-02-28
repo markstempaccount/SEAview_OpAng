@@ -295,6 +295,7 @@ void RunSEAview(double radius = 10.5, bool candles = true, bool subplots = false
 
 			cnt++;
 			if(cnt>maxcnt) break; //Number of pdfs to save
+			if(i>=maxcnt) break;
 		}
 
 		//Normalize (or not) the TH2D into a respsonse matrix.
