@@ -387,8 +387,10 @@ class SEAviewer
             out_graphs2D[i+3].SetMarkerStyle(20);
             out_graphs2D[i+3].SetMarkerColor(kGreen-6);
 
-            getLine2D(&left_fit[0],kRed-6,i,radius);
-            getLine2D(&right_fit[0],kGreen-6,i,radius);
+	    if(reco_ang!=-9997 && reco_ang!=-9998){
+            	getLine2D(&left_fit[0],kRed-6,i,radius);
+            	getLine2D(&right_fit[0],kGreen-6,i,radius);
+	    }
             zero.Draw("same p");
         }
     }
