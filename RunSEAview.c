@@ -41,7 +41,7 @@
 
 int main(){
 
-    double radius = 1.0; bool candles = true; bool subplots = false; bool graphEVD_SEAview = false; bool graphResponse = true; bool normalizeResponse = false; double dist_2_true_max = 1.0; double min_rtang_diff = 0; int maxcnt = 100; double easymax = 0.9; double e_totmin = 100; bool iterateRadius = true; double radiusInterval = 0.5; double maxradius = 2;
+    double radius = 1.0; bool candles = true; bool subplots = false; bool graphEVD_SEAview = false; bool graphResponse = true; bool normalizeResponse = false; double dist_2_true_max = 1.0; double min_rtang_diff = 0; int maxcnt = 1e6; double easymax = 0.9; double e_totmin = 100; bool iterateRadius = true; double radiusInterval = 0.5; double maxradius = 20;
 
     //If not iterating radius, set maxradius to current radius so main loop only runs once.
     if(!iterateRadius)
@@ -51,7 +51,7 @@ int main(){
         return 0;
     }
 
-    std::string sp_reco = "pan"; //wc or pan
+    std::string sp_reco = "wc"; //wc or pan
     std::string vtx_reco = "pan";
 
     //Some vectors to store the 2D recob::Hits. The Wire number, the plane (0,1 or 2), the energy and the peak time tick
@@ -98,7 +98,7 @@ int main(){
         gSystem -> cd(response_dir.c_str());
 
         //Grab the TTrees associated with the gLEE Ntuples (automatically friends the necessary bits internally). Function in plothelper.h simple and quick. 
-        TFile *fWC = new TFile("/home/mark/work/uBooNE/EplusEmin_Retreat2022_Master/Merged_WC_Pandora/reprocessed_wc_pandora_epem_file_v3.root", "READ");
+        TFile *fWC = new TFile("/pnfs/uboone/persistent/users/markross/IsoTropic_epem_samples/reprocessed_wc_pandora_epem_file_v2.root", "READ");
         TTree *v = (TTree*) fWC -> Get("newtree;1");
 
         //Create some dictionaryies so root can read vectors of vectors. Not strictly needed but safer. 
@@ -197,11 +197,11 @@ int main(){
         TH2D *h2absolute = new TH2D("h2absolute", "Num Tracks + Showers:Reco Opening Angle Error", 2, 0.5, 2.5, 135, -45, 90);
         TH2D *h3absolute = new TH2D("h3absolute", "E_max/E_total:Reco Opening Angle Error", (int) std::round((easymax - 0.50)/0.01), 0.50, easymax, 135, -45, 90);
         TH2D *h4absolute = new TH2D("h4absolute", "True:Reco Opening Angle Error", 45, 0, 45, 135, -45, 90);
-        TH2D *h5absolute = new TH2D("h5absolute", "Reco Vertex Error:Reco Opening Angle Error", 40, 0, dist_2_true_max, 135, -45, 90);
+        TH2D *h5absolute = new TH2D("h5absolute", "Reco Vertex Error:Reco Opening Angle Error", (int) std::round(dist_2_true_max/0.025), 0, dist_2_true_max, 135, -45, 90);
         TH2D *h2percent = new TH2D("h2percent", "Num Tracks + Showers:Reco Opening Angle Error", 2, 0.5, 2.5, 100, -100, 200);
         TH2D *h3percent = new TH2D("h3percent", "E_max/E_total:Reco Opening Angle Error", (int) std::round((easymax - 0.50)/0.01), 0.50, easymax, 100, -100, 200);
         TH2D *h4percent = new TH2D("h4percent", "True:Reco Opening Angle Error", 45, 0, 45, 100, -100, 200);
-        TH2D *h5percent = new TH2D("h5percent", "Reco Vertex Error:Reco Opening Angle Error", 40, 0, dist_2_true_max, 100, -100, 200);
+        TH2D *h5percent = new TH2D("h5percent", "Reco Vertex Error:Reco Opening Angle Error", (int) std::round(dist_2_true_max/0.025), 0, dist_2_true_max, 100, -100, 200);
 
         //some configuration bits
         std::vector<int> cols = {kBlue-6, kMagenta+1};
@@ -245,7 +245,7 @@ int main(){
             //Distance between Pandora/Wirecell reco vertex and true vertex. If too large, can't properly reconstruct tracks and showers.
             double dist_2_true = sqrt( pow(reco_vertex_3D[0]-true_vertex[0],2)+  pow(reco_vertex_3D[1]-true_vertex[1],2) + pow(reco_vertex_3D[2]-true_vertex[2],2) );
             std::cout<<"Dist: "<<dist_2_true<<", Reco: "<<reco_vertex_3D[0]<<" "<<reco_vertex_3D[1]<<" "<<reco_vertex_3D[2]<<" True: "<<true_vertex[0]<<" "<<true_vertex[1]<<" "<<true_vertex[2]<<std::endl;
-            if(dist_2_true > 1) shall_we = false;
+            if(dist_2_true > dist_2_true_max) shall_we = false;
 
 
             if(shall_we){
@@ -292,8 +292,8 @@ int main(){
                 std::vector<std::string> vals = {  to_string_prec(true_opang,1),to_string_prec(easy,2),to_string_prec(e_tot,3),std::to_string(num_reco_tracks),std::to_string(num_reco_showers)};
 
                 //And do the cal does calculation and plots
-                SEAviewer reco_obj (objs, reco_vertex_3D, reco_vertex_2D, true_vertex, sp_reco + "_sp_" + vtx_reco + "_vert_"+std::to_string(subrun_number)+"_"+std::to_string(event_number), tags, vals, radius); 
-                //SEAviewer reco_obj (objs, true_vertex, reco_vertex_2D, true_vertex, "fixed_plane_fit_"+std::to_string(subrun_number)+"_"+std::to_string(event_number), tags, vals, radius); 
+                //SEAviewer reco_obj (objs, reco_vertex_3D, reco_vertex_2D, true_vertex, sp_reco + "_sp_" + vtx_reco + "_vert_"+std::to_string(subrun_number)+"_"+std::to_string(event_number), tags, vals, radius); 
+                SEAviewer reco_obj (objs, true_vertex, reco_vertex_2D, true_vertex, "fixed_plane_fit_"+std::to_string(subrun_number)+"_"+std::to_string(event_number), tags, vals, radius); 
                 reco_obj.reco_ang_calc();
 
                 //Whether or not to graph individual events.
@@ -336,12 +336,11 @@ int main(){
 
             cnt++;
             if(cnt>maxcnt) break; //Number of pdfs to save
-            if(i>=maxcnt) break;
         }
 
         //Normalize (or not) the TH2D into a respsonse matrix.
         if(graphResponse){
-            std::string fResponsename = sp_reco + "Response" + vtx_reco + "Vertex";
+            std::string fResponsename = sp_reco + "Response" + "trueVertex";
             TH2D* h[9] = {h1, h2absolute, h2percent, h3absolute, h3percent, h4absolute, h4percent, h5absolute, h5percent};
             std::string xlabel[5] = {"True e^{+}e^{-} Opening Angle [Deg]", "Number of Tracks + Showers", "E_max/E_total", "True e^{+}e^{-} Opening Angle [Deg]", "Vertex Error [cm]"}; //Is Vertex error actually in cm?
             TFile *fResponse = new TFile((fResponsename + ".root").c_str(), "RECREATE");
@@ -487,9 +486,9 @@ int main(){
                 h[k] -> GetYaxis() -> SetTitle("Reco e^{+}e^{-} Opening Angle Error [%]");
             h[k] -> GetXaxis() ->SetTitle("Radius of Reco Circle (cm)");
             if(k == 0)
-                ch -> SaveAs((sp_reco + "Radius" + vtx_reco + "Vertex.pdf(").c_str(), "pdf");
+                ch -> SaveAs((sp_reco + "Radius" + "trueVertex.pdf(").c_str(), "pdf");
             else
-                ch -> SaveAs((sp_reco + "Radius" + vtx_reco + "Vertex.pdf)").c_str(), "pdf");
+                ch -> SaveAs((sp_reco + "Radius" + "trueVertex.pdf)").c_str(), "pdf");
         }}
 
     delete reco_shower_hit_wire;
