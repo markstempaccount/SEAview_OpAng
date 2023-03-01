@@ -1,8 +1,21 @@
+//C++ includes
 #include <vector>
+#include <cmath>
+#include <iostream>
+#include <ostream>
+#include <fstream>
+#include <map>
+
+//Our local includes
 #include "plothelper.h"
 #include "SEAview_lite_epem.h"
 #include "SEAobject.h"
 #include "SetRealAspectRatio2.h"
+
+//Other includes
+#include "CLI11.hpp"
+
+//Root includes
 #include <TMath.h>
 #include <TGraph2D.h>
 #include <TRandom2.h>
@@ -14,7 +27,6 @@
 #include <TPolyLine3D.h>
 #include <Math/Vector3D.h>
 #include <Fit/Fitter.h>
-
 #include "TH1D.h"
 #include "TTree.h"
 #include "TTreeFormula.h"
@@ -25,23 +37,44 @@
 #include "TEllipse.h"
 #include "TLegend.h"
 #include "TPolyLine.h"
-#include <cmath>
-#include <iostream>
-#include <ostream>
-#include <fstream>
-#include <map>
 #include "TRandom3.h"
 #include "TLine.h"
-
 #include "TROOT.h"
 #include "TSystem.h"
 #include "TStyle.h"
 #include "TCanvas.h"
 
 
-int main(){
+int main(int argc, char **argv){
 
+    CLI::App app{"Run SEAviewer for e+e- opening angle calculations"}; 
+
+    // Define options
     double radius = 1.0; bool candles = true; bool subplots = false; bool graphEVD_SEAview = false; bool graphResponse = true; bool normalizeResponse = false; double dist_2_true_max = 1.0; double min_rtang_diff = 0; int maxcnt = 100; double easymax = 0.9; double e_totmin = 100; bool iterateRadius = true; double radiusInterval = 0.5; double maxradius = 2;
+
+    //doubles
+    app.add_option("-r,--radius", radius, "radius for search");
+    app.add_option("-d,--dist", dist_2_true_max, "distance from true to reco");
+    app.add_option("-m,--mindiff", min_rtang_diff, "Min reco-trie ang");
+    app.add_option("-n,--maxcnt", maxcnt, "max count of TTree entries");
+    app.add_option("-e,--easymax", easymax, "Energy Asymetry max");
+    app.add_option("-t,--emin", e_totmin, "Total energy min");
+    app.add_option("-i,--interval", radiusInterval,"radius to iterative over");
+    app.add_option("-x,--maxradius", maxradius,"Max radius");
+
+    //bools
+    app.add_option("-c,--candles", candles, "Plot candles?");
+    app.add_option("-s,--subplots",subplots, "Plot subplots?");
+    app.add_option("-v,--evd",graphEVD_SEAview,"Plot EVDs?");
+    app.add_option("-p,--response",graphResponse,"Plot EVDs?");
+    app.add_option("-z,--normalize",normalizeResponse,"Normalize Response?");
+    app.add_option("-a,--iterate",iterateRadius,"Iterate Radius?");
+
+    CLI11_PARSE(app, argc, argv);
+
+    printf("Argument input for this run -- radius : %f , dist : %f , mindiff : %f, maxcnt : %i, easymax : %f, emin : %f, interval : %f, maxrad : %f \n",radius,dist_2_true_max,min_rtang_diff,maxcnt,easymax,e_totmin,radiusInterval,maxradius);
+    printf("Argument bools for this run -- candles : %i , subplots : %i , evd : %i, response : %i, normalize : %i, iterate: %i \n",candles,subplots,graphEVD_SEAview,graphResponse,normalizeResponse,iterateRadius);
+
 
     //If not iterating radius, set maxradius to current radius so main loop only runs once.
     if(!iterateRadius)
