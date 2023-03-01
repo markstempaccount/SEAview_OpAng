@@ -26,6 +26,7 @@
 #include "TSystem.h"
 #include "TStyle.h"
 #include "TCanvas.h"
+#include <algorithm>
 
 #include <string>
 
