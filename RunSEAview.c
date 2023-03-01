@@ -169,9 +169,9 @@ int main(int argc, char **argv){
         //Some Other info for the event. How many tracks and showers pandora neutrino slice reconstructed, as well as Run:Subrun:Event number for ID
         int num_reco_showers = 2;
         int num_reco_tracks = 0;
-        ulong run_number=0;
-        ulong subrun_number=0;
-        ulong event_number=0;
+        Long64_t run_number=0;
+        Long64_t subrun_number=0;
+        Long64_t event_number=0;
         int in_wirecell = 1;
         v->SetBranchAddress("run",&run_number);
         v->SetBranchAddress("subrun",&subrun_number);
