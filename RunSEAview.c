@@ -50,8 +50,7 @@ int main(int argc, char **argv){
 	CLI::App app{"Run SEAviewer for e+e- opening angle calculations"}; 
 
 	// Define options
-	double radius = 1.0; bool candles = true; bool subplots = false; bool graphEVD_SEAview = false; bool graphResponse = true; bool normalizeResponse = false; double dist_2_true_max = 1.0; double min_rtang_diff = 0; int maxcnt = 1e6; double easymax = 0.9; double e_totmin = 100; bool iterateRadius = true; double radiusInterval = 0.5; double maxradius = 20;
-
+	double radius = 1.0; bool candles = true; bool subplots = false; bool graphEVD_SEAview = false; bool graphResponse = true; bool normalizeResponse = false; double dist_2_true_max = 1.0; double min_rtang_diff = 0; int maxcnt = 1e6; double easymax = 0.9; double e_totmin = 100; bool iterateRadius = true; double radiusInterval = 0.5; double maxradius = 20; int pevent = -999; int psubrun = -999; bool singlemode = false; std::string sp_reco = "comb"; std::string vtx_reco = "pan";
 	//doubles
 	app.add_option("-r,--radius", radius, "radius for search");
 	app.add_option("-d,--dist", dist_2_true_max, "distance from true to reco");
@@ -61,6 +60,8 @@ int main(int argc, char **argv){
 	app.add_option("-t,--emin", e_totmin, "Total energy min");
 	app.add_option("-i,--interval", radiusInterval,"radius to iterative over");
 	app.add_option("-x,--maxradius", maxradius,"Max radius");
+	app.add_option("--event", pevent,"Single event");
+	app.add_option("--subrun", psubrun,"Single subrun");
 
 	//bools
 	app.add_option("-c,--candles", candles, "Plot candles?");
@@ -70,11 +71,17 @@ int main(int argc, char **argv){
 	app.add_option("-z,--normalize",normalizeResponse,"Normalize Response?");
 	app.add_option("-a,--iterate",iterateRadius,"Iterate Radius?");
 
+	//std::string
+	app.add_option("--sp, --sp_reco", sp_reco, "Which spacepoints?");
+	app.add_option("--vt, --vtx_reco", vtx_reco, "Which vertices?");
+
 	CLI11_PARSE(app, argc, argv);
 
 	printf("Argument input for this run -- radius : %f , dist : %f , mindiff : %f, maxcnt : %i, easymax : %f, emin : %f, interval : %f, maxrad : %f \n",radius,dist_2_true_max,min_rtang_diff,maxcnt,easymax,e_totmin,radiusInterval,maxradius);
 	printf("Argument bools for this run -- candles : %i , subplots : %i , evd : %i, response : %i, normalize : %i, iterate: %i \n",candles,subplots,graphEVD_SEAview,graphResponse,normalizeResponse,iterateRadius);
+	printf("Argument strings for this run -- sp_reco: %s, vtx_reco : %s\n", sp_reco.c_str(), vtx_reco.c_str());
 
+	if(pevent > 0 && psubrun > 0) singlemode = true;
 
 	//If not iterating radius, set maxradius to current radius so main loop only runs once.
 	if(!iterateRadius)
@@ -83,9 +90,6 @@ int main(int argc, char **argv){
 		std::cout << "radiusInterval cannot be negative or 0!" << std::endl;
 		return 0;
 	}
-
-	std::string sp_reco = "wc"; //wc or pan
-	std::string vtx_reco = "pan";
 
 	//Some vectors to store the 2D recob::Hits. The Wire number, the plane (0,1 or 2), the energy and the peak time tick
 	std::vector<std::vector<int>> *reco_shower_hit_wire = new std::vector<std::vector<int>>(2, std::vector<int>(2, 1));
@@ -119,6 +123,8 @@ int main(int argc, char **argv){
 			work_dir = "/uboone/app/users/ltong/eplus_eminus_studies_2023/SEAview_OpAng/wirecell";
 		else if(sp_reco == "pan")
 			work_dir = "/uboone/app/users/ltong/eplus_eminus_studies_2023/SEAview_OpAng";
+		else if(sp_reco == "comb")
+			work_dir = "/uboone/app/users/ltong/eplus_eminus_studies_2023/SEAview_OpAng/combined";
 
 		//Data directory. Keeps output from different radii separate, which is useful if iterating. Unfortunately, requires regenerating dictionaries for each radius.
 		std::string response_dir = (std::to_string(radius));			
@@ -158,16 +164,22 @@ int main(int argc, char **argv){
 		  v->SetBranchAddress("wc_sp_y",&wc_sp_y);
 		  v->SetBranchAddress("wc_sp_z",&wc_sp_z);*/
 
-		int num_sp;
-		v->SetBranchAddress(("n"+sp_reco+"_sp").c_str(), &num_sp);
+		int npan_sp, nwc_sp;
+		v->SetBranchAddress("npan_sp", &npan_sp);
+		v->SetBranchAddress("nwc_sp", &nwc_sp);
 		int max_sp = 5000;
-		double sp_x[max_sp];
-		double sp_y[max_sp];
-		double sp_z[max_sp];
-		v->SetBranchAddress((sp_reco+"_sp_x").c_str(),&sp_x);
-		v->SetBranchAddress((sp_reco+"_sp_y").c_str(),&sp_y);
-		v->SetBranchAddress((sp_reco+"_sp_z").c_str(),&sp_z);
-
+		double pan_sp_x[max_sp];
+		double pan_sp_y[max_sp];
+		double pan_sp_z[max_sp];
+		double wc_sp_x[max_sp];
+		double wc_sp_y[max_sp];
+		double wc_sp_z[max_sp];
+		v->SetBranchAddress("pan_sp_x",&pan_sp_x);
+		v->SetBranchAddress("pan_sp_y",&pan_sp_y);
+		v->SetBranchAddress("pan_sp_z",&pan_sp_z);
+		v->SetBranchAddress("wc_sp_x",&wc_sp_x);
+		v->SetBranchAddress("wc_sp_y",&wc_sp_y);
+		v->SetBranchAddress("wc_sp_z",&wc_sp_z);
 
 		//Some Other info for the event. How many tracks and showers pandora neutrino slice reconstructed, as well as Run:Subrun:Event number for ID
 		int num_reco_showers = 2;
@@ -253,9 +265,25 @@ int main(int argc, char **argv){
 
 			v->GetEntry(i);
 
-			std::vector<double> *reco_spacepoint_x = new std::vector<double>(sp_x, sp_x + num_sp);
-			std::vector<double> *reco_spacepoint_y = new std::vector<double>(sp_y, sp_y + num_sp);
-			std::vector<double> *reco_spacepoint_z = new std::vector<double>(sp_z, sp_z + num_sp);
+			if(singlemode && (pevent != event_number || psubrun != subrun_number))continue;
+			std::vector<double> *reco_spacepoint_x;
+			std::vector<double> *reco_spacepoint_y;
+			std::vector<double> *reco_spacepoint_z;
+
+			if(sp_reco == "pan" || sp_reco == "comb"){
+				reco_spacepoint_x = new std::vector<double>(pan_sp_x, pan_sp_x + npan_sp);
+				reco_spacepoint_y = new std::vector<double>(pan_sp_y, pan_sp_y + npan_sp);
+				reco_spacepoint_z = new std::vector<double>(pan_sp_z, pan_sp_z + npan_sp);
+				if(sp_reco == "comb"){
+					reco_spacepoint_x->insert(reco_spacepoint_x->end(), wc_sp_x, wc_sp_x + nwc_sp);
+					reco_spacepoint_y->insert(reco_spacepoint_y->end(), wc_sp_y, wc_sp_y + nwc_sp);
+					reco_spacepoint_z->insert(reco_spacepoint_z->end(), wc_sp_z, wc_sp_z + nwc_sp);	
+			}}
+			else if(sp_reco == "wc"){
+				reco_spacepoint_x = new std::vector<double>(wc_sp_x, wc_sp_x + nwc_sp);
+				reco_spacepoint_y = new std::vector<double>(wc_sp_y, wc_sp_y + nwc_sp);
+				reco_spacepoint_z = new std::vector<double>(wc_sp_z, wc_sp_z + nwc_sp);
+			}
 
 			bool shall_we = true;
 
@@ -328,18 +356,20 @@ int main(int argc, char **argv){
 				std::vector<std::string> vals = {  to_string_prec(true_opang,1),to_string_prec(easy,2),to_string_prec(e_tot,3),std::to_string(num_reco_tracks),std::to_string(num_reco_showers)};
 
 				//And do the cal does calculation and plots
-				//SEAviewer reco_obj (objs, reco_vertex_3D, reco_vertex_2D, true_vertex, sp_reco + "_sp_" + vtx_reco + "_vert_"+std::to_string(subrun_number)+"_"+std::to_string(event_number), tags, vals, radius); 
-				SEAviewer reco_obj (objs, true_vertex, reco_vertex_2D, true_vertex, "fixed_plane_fit_"+std::to_string(subrun_number)+"_"+std::to_string(event_number), tags, vals, radius); 
+				SEAviewer reco_obj (objs, reco_vertex_3D, reco_vertex_2D, true_vertex, sp_reco + "_sp_" + vtx_reco + "_vert_"+std::to_string(subrun_number)+"_"+std::to_string(event_number), tags, vals, radius); 
+				//SEAviewer reco_obj (objs, true_vertex, reco_vertex_2D, true_vertex, "fixed_plane_fit_"+std::to_string(subrun_number)+"_"+std::to_string(event_number), tags, vals, radius); 
 				reco_obj.reco_ang_calc();
+
+
+				//Want to look at failure modes; set min_rtang_diff to 0 (default) if wishing to view all events.
+				float rtang_diff = fabs(reco_obj.reco_ang - true_opang);
+				if(rtang_diff < min_rtang_diff) continue;
 
 				//Whether or not to graph individual events.
 				if(graphEVD_SEAview)
 					reco_obj.plotter();
 
 
-				//Want to look at failure modes; set min_rtang_diff to 0 (default) if wishing to view all events.
-				float rtang_diff = fabs(reco_obj.reco_ang - true_opang);
-				if(rtang_diff < min_rtang_diff) continue;
 				std::cout<<"*******************************************Difference between True and Reco Ang "<<rtang_diff<<std::endl;	
 
 				//Fill output Th2D
@@ -364,19 +394,21 @@ int main(int argc, char **argv){
 					}
 				}
 				std::cout<<"How did we do? True OpAng : "<<true_opang<<" Reco OpAng : "<<reco_obj.reco_ang<<std::endl;
+				cnt++;
+				printf("cnt: %d/n", cnt);
 			}
 
 			delete reco_spacepoint_x;
 			delete reco_spacepoint_y;
 			delete reco_spacepoint_z;
 
-			cnt++;
+			if(singlemode && pevent == event_number && psubrun == subrun_number)break;
 			if(cnt>maxcnt) break; //Number of pdfs to save
 		}
 
 		//Normalize (or not) the TH2D into a respsonse matrix.
 		if(graphResponse){
-			std::string fResponsename = sp_reco + "Response" + "trueVertex";
+			std::string fResponsename = sp_reco + "Response" + vtx_reco + "Vertex";
 			TH2D* h[9] = {h1, h2absolute, h2percent, h3absolute, h3percent, h4absolute, h4percent, h5absolute, h5percent};
 			std::string xlabel[5] = {"True e^{+}e^{-} Opening Angle [Deg]", "Number of Tracks + Showers", "E_max/E_total", "True e^{+}e^{-} Opening Angle [Deg]", "Vertex Error [cm]"}; //Is Vertex error actually in cm?
 			TFile *fResponse = new TFile((fResponsename + ".root").c_str(), "RECREATE");
@@ -524,9 +556,9 @@ int main(int argc, char **argv){
 				h[k] -> GetYaxis() -> SetTitle("Reco e^{+}e^{-} Opening Angle Error [%]");
 			h[k] -> GetXaxis() ->SetTitle("Radius of Reco Circle (cm)");
 			if(k == 0)
-				ch -> SaveAs((sp_reco + "Radius" + "trueVertex.pdf(").c_str(), "pdf");
+				ch -> SaveAs((sp_reco + "Radius" + vtx_reco + "Vertex.pdf(").c_str(), "pdf");
 			else
-				ch -> SaveAs((sp_reco + "Radius" + "trueVertex.pdf)").c_str(), "pdf");
+				ch -> SaveAs((sp_reco + "Radius" + vtx_reco + "Vertex.pdf)").c_str(), "pdf");
 		}}
 
 	delete reco_shower_hit_wire;

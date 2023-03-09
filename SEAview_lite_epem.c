@@ -336,7 +336,7 @@ void SEAviewer::plotter(){
         for(int i=0; i<3; i++){
             can->cd(9+i);
 
-            std::cout<<"Int Line "<<i<<std::endl;
+            std::cout<<"Int Line "<<i<<" "<<out_graphs2D.size()<<std::endl;
             out_graphs2D[i].Draw("ap");
             out_graphs2D[i].GetYaxis()->SetRangeUser(-radius,radius);
             out_graphs2D[i].GetXaxis()->SetLimits(-radius,radius);
