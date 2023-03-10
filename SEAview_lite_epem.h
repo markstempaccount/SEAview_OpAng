@@ -50,6 +50,7 @@ class SEAviewer
 	std::vector<double> all_fit_points_x;
 	std::vector<double> all_fit_points_y;
 	std::vector<double> all_fit_points_z;
+	std::vector<int> all_fit_inwc;
 	std::vector<TGraph> out_graphs2D; //to save output left/right pts
 	std::vector<double> left_fit;//the parameters of the fitted lines, for visualization only
 	std::vector<double> right_fit;
@@ -68,7 +69,7 @@ class SEAviewer
                 double radius1) :objs(objs1), reco_vertex_3D(reco_vertex_3D1), reco_vertex_2D(reco_vertex_2D1), true_vertex(true_vertex1), tag(tag1), tags(tags1), vals(vals1), radius(radius1) {}
 
 
-	void  reco_ang_calc();
+	int  reco_ang_calc();
 
 	void plotter();
 

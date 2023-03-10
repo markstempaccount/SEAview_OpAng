@@ -105,7 +105,7 @@ int getLine(const double * parFit, int col){
 }
 
 //Messy at the moment. Will need to tidy up
-double recoOpAng1(std::vector<double> start_point,   std::vector<double> shower_point_x,     std::vector<double> shower_point_y,    std::vector<double> shower_point_z, std::vector<TGraph> &out_graphs2D, std::vector<double> &left_par, std::vector<double>&right_par){
+double recoOpAng1(std::vector<double> start_point,   std::vector<double> shower_point_x,     std::vector<double> shower_point_y,    std::vector<double> shower_point_z, std::vector<double> shower_weight,  std::vector<TGraph> &out_graphs2D, std::vector<double> &left_par, std::vector<double>&right_par){
 
     int N_pts = shower_point_x.size();
     
@@ -125,7 +125,7 @@ double recoOpAng1(std::vector<double> start_point,   std::vector<double> shower_
     ROOT::Fit::Fitter  fitter;
     
     // make the functor objet
-    SumDistance2 sdist(g3D);
+    SumDistance2 sdist(g3D,vec_iswc);
     ROOT::Math::Functor fcn(sdist,2);
 
     //fitter.GetFCN()->SetParLimit(0,0,2.0*TMath::Pi());
@@ -192,10 +192,12 @@ double recoOpAng1(std::vector<double> start_point,   std::vector<double> shower_
     std::vector<double> left_x;
     std::vector<double> left_y;
     std::vector<double> left_z;
+    std::vector<double> left_w;
 
     std::vector<double> right_x;
     std::vector<double> right_y;
     std::vector<double> right_z;
+    std::vector<double> right_w;
 
     for(int i=0; i< N_pts; i++){
 
@@ -204,10 +206,12 @@ double recoOpAng1(std::vector<double> start_point,   std::vector<double> shower_
                 left_x.push_back(shower_point_x[i]);
                 left_y.push_back(shower_point_y[i]);
                 left_z.push_back(shower_point_z[i]);
+                left_w.push_back(shower_weight[i]);
         }else{
                 right_x.push_back(shower_point_x[i]);
                 right_y.push_back(shower_point_y[i]);
                 right_z.push_back(shower_point_z[i]);
+                right_w.push_back(shower_weight[i]);
         }
 
     }
@@ -228,7 +232,7 @@ double recoOpAng1(std::vector<double> start_point,   std::vector<double> shower_
  
 
     ROOT::Fit::Fitter  leftfitter;
-    SumDistance2 leftdist(left3D);
+    SumDistance2 leftdist(left3D,left_w);
     ROOT::Math::Functor leftfcn(leftdist,2);
     double leftStart[2] = {0,0};
     leftfitter.SetFCN(leftfcn,leftStart);
@@ -243,7 +247,7 @@ double recoOpAng1(std::vector<double> start_point,   std::vector<double> shower_
     left_par = {leftparFit[0],leftparFit[1]};
 
     ROOT::Fit::Fitter  rightfitter;
-    SumDistance2 rightdist(right3D);
+    SumDistance2 rightdist(right3D,right_w);
     ROOT::Math::Functor rightfcn(rightdist,2);
     double rightStart[2] = {0,0};
     rightfitter.SetFCN(rightfcn,rightStart);

@@ -89,8 +89,9 @@
 struct SumPlaneDistance2 {
     // the TGraph is a data member of the object
     TGraph2D *fGraph;
+    std::vector<double> fWei;
     bool first;
-    SumPlaneDistance2(TGraph2D *g) : fGraph(g) {first=true;}
+    SumPlaneDistance2(TGraph2D *g, std::vector<double> wei) : fGraph(g), fWei(wei) {first=true;}
  
     // calculate distance line-point
     double distance2(double x,double y,double z, const double *p) {
@@ -106,7 +107,7 @@ struct SumPlaneDistance2 {
        int npoints = fGraph->GetN();
        double sum = 0;
        for (int i  = 0; i < npoints; ++i) {
-          double d = distance2(x[i],y[i],z[i],par);
+          double d = fWei[i]*distance2(x[i],y[i],z[i],par);
           sum += d*d;
        }
        if (first) {

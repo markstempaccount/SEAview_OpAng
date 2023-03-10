@@ -50,7 +50,7 @@ int main(int argc, char **argv){
 	CLI::App app{"Run SEAviewer for e+e- opening angle calculations"}; 
 
 	// Define options
-	double radius = 1.0; bool candles = true; bool subplots = false; bool graphEVD_SEAview = false; bool graphResponse = true; bool normalizeResponse = false; double dist_2_true_max = 1.0; double min_rtang_diff = 0; int maxcnt = 1e6; double easymax = 0.9; double e_totmin = 100; bool iterateRadius = true; double radiusInterval = 0.5; double maxradius = 20; int pevent = -999; int psubrun = -999; bool singlemode = false; std::string sp_reco = "comb"; std::string vtx_reco = "pan";
+	double radius = 10; bool candles = true; bool subplots = false; bool graphEVD_SEAview = false; bool graphResponse = true; bool normalizeResponse = false; double dist_2_true_max = 1.0; double min_rtang_diff = 0; int maxcnt = 1e6; double easymax = 0.9; double e_totmin = 100; bool iterateRadius = false; double radiusInterval = 0.5; double maxradius = 20; int pevent = -999; int psubrun = -999; bool singlemode = false; std::string sp_reco = "comb"; std::string vtx_reco = "pan";
 	//doubles
 	app.add_option("-r,--radius", radius, "radius for search");
 	app.add_option("-d,--dist", dist_2_true_max, "distance from true to reco");
@@ -164,6 +164,12 @@ int main(int argc, char **argv){
 		  v->SetBranchAddress("wc_sp_y",&wc_sp_y);
 		  v->SetBranchAddress("wc_sp_z",&wc_sp_z);*/
 
+		int e9995 = 0;
+		int e9996 = 0;
+		int e9997 = 0;
+		int e9998 = 0;
+		int e9999 = 0;
+
 		int npan_sp, nwc_sp;
 		v->SetBranchAddress("npan_sp", &npan_sp);
 		v->SetBranchAddress("nwc_sp", &nwc_sp);
@@ -250,6 +256,7 @@ int main(int argc, char **argv){
 		TH2D *h3percent = new TH2D("h3percent", "E_max/E_total:Reco Opening Angle Error", (int) std::round((easymax - 0.50)/0.01), 0.50, easymax, 100, -100, 200);
 		TH2D *h4percent = new TH2D("h4percent", "True:Reco Opening Angle Error", 45, 0, 45, 100, -100, 200);
 		TH2D *h5percent = new TH2D("h5percent", "Reco Vertex Error:Reco Opening Angle Error", (int) std::round(dist_2_true_max/0.025), 0, dist_2_true_max, 100, -100, 200);
+		TH1D *hn_sp = new TH1D("hn_sp", "Number of Spacepoints in Radius", 1001, -0.5, 1000.5);
 
 		//some configuration bits
 		std::vector<int> cols = {kBlue-6, kMagenta+1};
@@ -341,7 +348,7 @@ int main(int argc, char **argv){
 				}else {
 					std::vector<int> tmpi = {0};
 					std::vector<double> tmpd ={0};
-					objs.emplace_back(1, cols[0], tmpi,tmpi,tmpd,tmpd, *reco_spacepoint_x, *reco_spacepoint_y, *reco_spacepoint_z);
+					objs.emplace_back(1, cols[0], tmpi,tmpi,tmpd,tmpd, *reco_spacepoint_x, *reco_spacepoint_y, *reco_spacepoint_z,*iswc);
 
 				}
 
@@ -358,12 +365,23 @@ int main(int argc, char **argv){
 				//And do the cal does calculation and plots
 				SEAviewer reco_obj (objs, reco_vertex_3D, reco_vertex_2D, true_vertex, sp_reco + "_sp_" + vtx_reco + "_vert_"+std::to_string(subrun_number)+"_"+std::to_string(event_number), tags, vals, radius); 
 				//SEAviewer reco_obj (objs, true_vertex, reco_vertex_2D, true_vertex, "fixed_plane_fit_"+std::to_string(subrun_number)+"_"+std::to_string(event_number), tags, vals, radius); 
-				reco_obj.reco_ang_calc();
+				int n_sp = reco_obj.reco_ang_calc();
 
-
+				if(reco_obj.reco_ang == -9995)
+					e9995 += 1;
+				if(reco_obj.reco_ang == -9996)
+					e9996 += 1;
+				if(reco_obj.reco_ang == -9997)
+					e9997 += 1;
+				if(reco_obj.reco_ang == -9998)
+					e9998 += 1;
+				if(reco_obj.reco_ang == -9999)
+					e9999 += 1;
+				
 				//Want to look at failure modes; set min_rtang_diff to 0 (default) if wishing to view all events.
 				float rtang_diff = fabs(reco_obj.reco_ang - true_opang);
 				if(rtang_diff < min_rtang_diff) continue;
+				if(reco_obj.reco_ang < 0) continue;
 
 				//Whether or not to graph individual events.
 				if(graphEVD_SEAview)
@@ -392,6 +410,7 @@ int main(int argc, char **argv){
 						h6percent -> Fill(radius, percenterror);
 						//std::cout<<1.3<<std::endl;
 					}
+					hn_sp -> Fill(n_sp);
 				}
 				std::cout<<"How did we do? True OpAng : "<<true_opang<<" Reco OpAng : "<<reco_obj.reco_ang<<std::endl;
 				cnt++;
@@ -418,12 +437,13 @@ int main(int argc, char **argv){
 			TCanvas *ch1 = new TCanvas();
 			TCanvas *ch2 = new TCanvas("ch2", "ch2", 3000, 2400);
 			TCanvas *ch3 = new TCanvas("ch3", "ch3", 3000, 2400);
+			TCanvas *ch4 = new TCanvas();
 			if(subplots){
 				ch2 -> Divide(2, 2);
 				ch3 -> Divide(2, 2);
 			}
 			for(int k = 0; k < 9; k++){
-				if(normalizeResponse){
+				if(normalizeResponse && k != 9){
 					std::vector<double> norms;
 					for(int i=0; i<=h[k] ->GetNbinsX(); i++){
 						norms.push_back(0.0);
@@ -452,10 +472,10 @@ int main(int argc, char **argv){
 				double firstbinxlowedge = h[k] -> GetXaxis() -> GetBinLowEdge(1);
 				int lastbinx = h[k] -> FindLastBinAbove(0, 1);
 				double lastbinxhighedge = h[k] -> GetXaxis() -> GetBinLowEdge(lastbinx + 1);
-				int firstbiny = h[k] -> FindFirstBinAbove(0, 2);
-				double firstbinylowedge = h[k] -> GetYaxis() -> GetBinLowEdge(firstbiny);
-				int lastbiny = h[k] -> FindLastBinAbove(0, 2);
-				double lastbinyhighedge = h[k] -> GetYaxis() -> GetBinLowEdge(lastbiny + 1);
+				//int firstbiny = h[k] -> FindFirstBinAbove(0, 2);
+				//double firstbinylowedge = h[k] -> GetYaxis() -> GetBinLowEdge(firstbiny);
+				//int lastbiny = h[k] -> FindLastBinAbove(0, 2);
+				//double lastbinyhighedge = h[k] -> GetYaxis() -> GetBinLowEdge(lastbiny + 1);
 				h[k] -> GetXaxis() -> SetRangeUser(firstbinxlowedge, lastbinxhighedge);
 				//h[k] -> GetYaxis() -> SetRangeUser(firstbinylowedge, lastbinyhighedge);
 				h[k] -> SetFillStyle(0);
@@ -486,7 +506,7 @@ int main(int argc, char **argv){
 				}
 				else if(k == 8){
 					ch3 ->Write();
-					ch3 -> SaveAs((fResponsename + ".pdf)").c_str(), "pdf");
+					ch3 -> SaveAs((fResponsename + ".pdf").c_str(), "pdf");
 					ch3 ->SaveAs("ch3.C");
 				}
 				else if(!subplots){
@@ -504,7 +524,24 @@ int main(int argc, char **argv){
 				//delete ch1;
 				//delete ch2;
 				//delete ch3;
-			}}
+			}
+			ch4 -> cd();
+			double firstbinxlowedge = hn_sp -> GetXaxis() -> GetBinLowEdge(1);
+			int lastbinx = hn_sp -> FindLastBinAbove(0, 1);
+			double lastbinxhighedge = hn_sp -> GetXaxis() -> GetBinLowEdge(lastbinx + 1);
+			hn_sp -> GetXaxis() -> SetRangeUser(firstbinxlowedge, lastbinxhighedge);
+			gStyle -> SetOptStat(1);
+			hn_sp -> Draw();
+			ch4 -> SaveAs((fResponsename + ".pdf)").c_str(), "pdf");
+			FILE *ferr = fopen((fResponsename + ".txt").c_str(), "w");
+			fprintf(ferr, "-9995: %d\n", e9995);
+			fprintf(ferr, "-9996: %d\n", e9996);
+			fprintf(ferr, "-9997: %d\n", e9997);
+			fprintf(ferr, "-9998: %d\n", e9998);
+			fprintf(ferr, "-9999: %d\n", e9999);
+			fprintf(ferr, "total: %d\n", e9995 + e9996 + e9997 + e9998 + e9999);
+			fclose(ferr);
+		}
 		gSystem -> cd(work_dir.c_str());
 		radius += radiusInterval;
 		fWC->Close();
