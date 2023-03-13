@@ -50,7 +50,7 @@ class SEAviewer
 	std::vector<double> all_fit_points_x;
 	std::vector<double> all_fit_points_y;
 	std::vector<double> all_fit_points_z;
-	std::vector<int> all_fit_inwc;
+	std::vector<double> all_fit_weights;
 	std::vector<TGraph> out_graphs2D; //to save output left/right pts
 	std::vector<double> left_fit;//the parameters of the fitted lines, for visualization only
 	std::vector<double> right_fit;

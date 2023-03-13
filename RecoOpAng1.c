@@ -125,7 +125,7 @@ double recoOpAng1(std::vector<double> start_point,   std::vector<double> shower_
     ROOT::Fit::Fitter  fitter;
     
     // make the functor objet
-    SumDistance2 sdist(g3D,vec_iswc);
+    SumDistance2 sdist(g3D, shower_weight);
     ROOT::Math::Functor fcn(sdist,2);
 
     //fitter.GetFCN()->SetParLimit(0,0,2.0*TMath::Pi());
@@ -160,7 +160,7 @@ double recoOpAng1(std::vector<double> start_point,   std::vector<double> shower_
     //Now fit a plane. 
 
     ROOT::Fit::Fitter  planefitter;
-    SumPlaneDistance2 pdist(g3D);
+    SumPlaneDistance2 pdist(g3D, shower_weight);
     ROOT::Math::Functor planefcn(pdist,3);
    
     // set the function and the initial parameter values

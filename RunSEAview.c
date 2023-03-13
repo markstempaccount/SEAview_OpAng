@@ -276,20 +276,24 @@ int main(int argc, char **argv){
 			std::vector<double> *reco_spacepoint_x;
 			std::vector<double> *reco_spacepoint_y;
 			std::vector<double> *reco_spacepoint_z;
+			std::vector<double> *weights;
 
 			if(sp_reco == "pan" || sp_reco == "comb"){
 				reco_spacepoint_x = new std::vector<double>(pan_sp_x, pan_sp_x + npan_sp);
 				reco_spacepoint_y = new std::vector<double>(pan_sp_y, pan_sp_y + npan_sp);
 				reco_spacepoint_z = new std::vector<double>(pan_sp_z, pan_sp_z + npan_sp);
+				weights = new std::vector<double>(npan_sp, 1);
 				if(sp_reco == "comb"){
 					reco_spacepoint_x->insert(reco_spacepoint_x->end(), wc_sp_x, wc_sp_x + nwc_sp);
 					reco_spacepoint_y->insert(reco_spacepoint_y->end(), wc_sp_y, wc_sp_y + nwc_sp);
-					reco_spacepoint_z->insert(reco_spacepoint_z->end(), wc_sp_z, wc_sp_z + nwc_sp);	
+					reco_spacepoint_z->insert(reco_spacepoint_z->end(), wc_sp_z, wc_sp_z + nwc_sp);
+					weights -> insert(weights -> end(), nwc_sp, 169.1/30.82);
 			}}
 			else if(sp_reco == "wc"){
 				reco_spacepoint_x = new std::vector<double>(wc_sp_x, wc_sp_x + nwc_sp);
 				reco_spacepoint_y = new std::vector<double>(wc_sp_y, wc_sp_y + nwc_sp);
 				reco_spacepoint_z = new std::vector<double>(wc_sp_z, wc_sp_z + nwc_sp);
+				weights = new std::vector<double>(nwc_sp, 1);
 			}
 
 			bool shall_we = true;
@@ -342,13 +346,13 @@ int main(int argc, char **argv){
 				}else{
 				*/
 				if(reco_track_hit_wire->size()!=0){
-					objs.emplace_back(1, cols[0], reco_track_hit_wire->at(0), reco_track_hit_plane->at(0), reco_track_hit_tick->at(0), reco_track_hit_energy->at(0), *reco_spacepoint_x, *reco_spacepoint_y, *reco_spacepoint_z);
+					objs.emplace_back(1, cols[0], reco_track_hit_wire->at(0), reco_track_hit_plane->at(0), reco_track_hit_tick->at(0), reco_track_hit_energy->at(0), *reco_spacepoint_x, *reco_spacepoint_y, *reco_spacepoint_z, *weights);
 				}else if(reco_track_hit_wire->size()!=0){
-					objs.emplace_back(1, cols[0], reco_shower_hit_wire->at(0), reco_shower_hit_plane->at(0), reco_shower_hit_tick->at(0), reco_shower_hit_energy->at(0), *reco_spacepoint_x, *reco_spacepoint_y, *reco_spacepoint_z);
+					objs.emplace_back(1, cols[0], reco_shower_hit_wire->at(0), reco_shower_hit_plane->at(0), reco_shower_hit_tick->at(0), reco_shower_hit_energy->at(0), *reco_spacepoint_x, *reco_spacepoint_y, *reco_spacepoint_z, *weights);
 				}else {
 					std::vector<int> tmpi = {0};
 					std::vector<double> tmpd ={0};
-					objs.emplace_back(1, cols[0], tmpi,tmpi,tmpd,tmpd, *reco_spacepoint_x, *reco_spacepoint_y, *reco_spacepoint_z,*iswc);
+					objs.emplace_back(1, cols[0], tmpi,tmpi,tmpd,tmpd, *reco_spacepoint_x, *reco_spacepoint_y, *reco_spacepoint_z,*weights);
 
 				}
 
@@ -363,7 +367,7 @@ int main(int argc, char **argv){
 				std::vector<std::string> vals = {  to_string_prec(true_opang,1),to_string_prec(easy,2),to_string_prec(e_tot,3),std::to_string(num_reco_tracks),std::to_string(num_reco_showers)};
 
 				//And do the cal does calculation and plots
-				SEAviewer reco_obj (objs, reco_vertex_3D, reco_vertex_2D, true_vertex, sp_reco + "_sp_" + vtx_reco + "_vert_"+std::to_string(subrun_number)+"_"+std::to_string(event_number), tags, vals, radius); 
+				SEAviewer reco_obj (objs, reco_vertex_3D, reco_vertex_2D, true_vertex, sp_reco + "_sp_" + vtx_reco + "_vert_weighted_"+std::to_string(subrun_number)+"_"+std::to_string(event_number), tags, vals, radius); 
 				//SEAviewer reco_obj (objs, true_vertex, reco_vertex_2D, true_vertex, "fixed_plane_fit_"+std::to_string(subrun_number)+"_"+std::to_string(event_number), tags, vals, radius); 
 				int n_sp = reco_obj.reco_ang_calc();
 
@@ -420,6 +424,7 @@ int main(int argc, char **argv){
 			delete reco_spacepoint_x;
 			delete reco_spacepoint_y;
 			delete reco_spacepoint_z;
+			delete weights;
 
 			if(singlemode && pevent == event_number && psubrun == subrun_number)break;
 			if(cnt>maxcnt) break; //Number of pdfs to save
@@ -427,7 +432,7 @@ int main(int argc, char **argv){
 
 		//Normalize (or not) the TH2D into a respsonse matrix.
 		if(graphResponse){
-			std::string fResponsename = sp_reco + "Response" + vtx_reco + "Vertex";
+			std::string fResponsename = sp_reco + "Response" + vtx_reco + "VertexWeighted";
 			TH2D* h[9] = {h1, h2absolute, h2percent, h3absolute, h3percent, h4absolute, h4percent, h5absolute, h5percent};
 			std::string xlabel[5] = {"True e^{+}e^{-} Opening Angle [Deg]", "Number of Tracks + Showers", "E_max/E_total", "True e^{+}e^{-} Opening Angle [Deg]", "Vertex Error [cm]"}; //Is Vertex error actually in cm?
 			TFile *fResponse = new TFile((fResponsename + ".root").c_str(), "RECREATE");
@@ -533,6 +538,7 @@ int main(int argc, char **argv){
 			gStyle -> SetOptStat(1);
 			hn_sp -> Draw();
 			ch4 -> SaveAs((fResponsename + ".pdf)").c_str(), "pdf");
+			gStyle -> SetOptStat(0);
 			FILE *ferr = fopen((fResponsename + ".txt").c_str(), "w");
 			fprintf(ferr, "-9995: %d\n", e9995);
 			fprintf(ferr, "-9996: %d\n", e9996);
@@ -593,9 +599,9 @@ int main(int argc, char **argv){
 				h[k] -> GetYaxis() -> SetTitle("Reco e^{+}e^{-} Opening Angle Error [%]");
 			h[k] -> GetXaxis() ->SetTitle("Radius of Reco Circle (cm)");
 			if(k == 0)
-				ch -> SaveAs((sp_reco + "Radius" + vtx_reco + "Vertex.pdf(").c_str(), "pdf");
+				ch -> SaveAs((sp_reco + "Radius" + vtx_reco + "VertexWeighted.pdf(").c_str(), "pdf");
 			else
-				ch -> SaveAs((sp_reco + "Radius" + vtx_reco + "Vertex.pdf)").c_str(), "pdf");
+				ch -> SaveAs((sp_reco + "Radius" + vtx_reco + "VertexWeighted.pdf)").c_str(), "pdf");
 		}}
 
 	delete reco_shower_hit_wire;

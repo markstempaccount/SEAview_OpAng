@@ -14,7 +14,7 @@ int  SEAviewer::reco_ang_calc(){
                 all_fit_points_x.push_back(obj.f_sp_x[j]);
                 all_fit_points_y.push_back(obj.f_sp_y[j]);
                 all_fit_points_z.push_back(obj.f_sp_z[j]);
-         	all_fit_iswc.push_back(obj.f_is_wc[j]);   
+         	all_fit_weights.push_back(obj.f_weights[j]);   
 	    }
         }
     }
@@ -22,7 +22,7 @@ int  SEAviewer::reco_ang_calc(){
     //Our outputs will be the angle calculated
     //We need minimum 2 points for this algorithm!
     if(all_fit_points_x.size()>1){
-        reco_ang =   recoOpAng1(reco_vertex_3D,   all_fit_points_x,    all_fit_points_y,    all_fit_points_z, all_fit_iswcall_fit_iswc,  out_graphs2D,left_fit,right_fit);
+        reco_ang =   recoOpAng1(reco_vertex_3D,   all_fit_points_x,    all_fit_points_y,    all_fit_points_z, all_fit_weights,  out_graphs2D,left_fit,right_fit);
     }else{
         std::cout<<"WARNING: only "<< all_fit_points_x.size()<<" points withint "<<radius<<" cm so cant calc angle, defaulting to -9999"<<std::endl;
     }

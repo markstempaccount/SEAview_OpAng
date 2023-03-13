@@ -37,6 +37,7 @@ class SEAobject{
     std::vector<double> f_sp_x;
     std::vector<double> f_sp_y;
     std::vector<double> f_sp_z;
+    std::vector<double> f_weights;
     int f_num_sp;
     std::vector<double> f_max_sp;
     std::vector<double> f_min_sp;
@@ -56,7 +57,7 @@ class SEAobject{
     std::vector<TGraph> f_graph_2D;
     std::vector<TGraph> f_graph_3D;
 
-    SEAobject(int type, int col, std::vector<int> wires, std::vector<int> planes, std::vector<double> ticks, std::vector<double> energies, std::vector<double> sp_x,  std::vector<double> sp_y, std::vector<double> sp_z  ) : f_type(type), f_col(col), f_sp_x(sp_x), f_sp_y(sp_y), f_sp_z(sp_z) {
+    SEAobject(int type, int col, std::vector<int> wires, std::vector<int> planes, std::vector<double> ticks, std::vector<double> energies, std::vector<double> sp_x,  std::vector<double> sp_y, std::vector<double> sp_z, std::vector<double> weights) : f_type(type), f_col(col), f_sp_x(sp_x), f_sp_y(sp_y), f_sp_z(sp_z), f_weights(weights) {
 
 
         f_ticks.resize(3);
