@@ -75,7 +75,7 @@ struct SumDistance2 {
 		double sum = 0;
 		for (int i  = 0; i < npoints; ++i) {
 			double d = distance2(x[i],y[i],z[i],par);
-			sum += fWeight[i]*fWeight[i]*d;
+			sum += fWeight[i]*d;
 		}
 		if (first) {
 			std::cout << "Total Initial distance square = " << sum << std::endl;
@@ -107,8 +107,8 @@ struct SumPlaneDistance2 {
 		int npoints = fGraph->GetN();
 		double sum = 0;
 		for (int i  = 0; i < npoints; ++i) {
-			double d = fWeight[i]*distance2(x[i],y[i],z[i],par);
-			sum += d*d;
+			double d = distance2(x[i],y[i],z[i],par);
+			sum += fWeight[i]*d*d;
 		}
 		if (first) {
 			std::cout << "Total Initial distance square = " << sum << std::endl;

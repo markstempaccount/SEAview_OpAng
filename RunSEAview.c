@@ -50,7 +50,7 @@ int main(int argc, char **argv){
 	CLI::App app{"Run SEAviewer for e+e- opening angle calculations"}; 
 
 	// Define options
-	double radius = 10; bool candles = true; bool subplots = false; bool graphEVD_SEAview = false; bool graphResponse = true; bool normalizeResponse = false; double dist_2_true_max = 1.0; double min_rtang_diff = 0; int maxcnt = 1e6; double easymax = 0.9; double e_totmin = 100; bool iterateRadius = false; double radiusInterval = 0.5; double maxradius = 20; int pevent = -999; int psubrun = -999; bool singlemode = false; std::string sp_reco = "comb"; std::string vtx_reco = "pan";
+	double radius = 10; bool candles = true; bool subplots = false; bool graphEVD_SEAview = false; bool graphResponse = true; bool normalizeResponse = false; double dist_2_true_max = 1.0; double min_rtang_diff = 0; int maxcnt = 1e6; double easymax = 0.9; double e_totmin = 100; bool iterateRadius = false; double radiusInterval = 0.5; double maxradius = 20; int pevent = -999; int psubrun = -999; bool singlemode = false; std::string sp_reco = "comb"; std::string vtx_reco = "pan", std::string fsuffix = "";
 	//doubles
 	app.add_option("-r,--radius", radius, "radius for search");
 	app.add_option("-d,--dist", dist_2_true_max, "distance from true to reco");
@@ -74,6 +74,7 @@ int main(int argc, char **argv){
 	//std::string
 	app.add_option("--sp, --sp_reco", sp_reco, "Which spacepoints?");
 	app.add_option("--vt, --vtx_reco", vtx_reco, "Which vertices?");
+	app.add_option("-f, --fsuffix", fsuffix, "Filename suffix");
 
 	CLI11_PARSE(app, argc, argv);
 
@@ -91,6 +92,10 @@ int main(int argc, char **argv){
 		return 0;
 	}
 
+	std::string fsuffixEVD = "";
+	if(fsuffix != "")
+		fsuffixEVD = fsuffix + "_";
+
 	//Some vectors to store the 2D recob::Hits. The Wire number, the plane (0,1 or 2), the energy and the peak time tick
 	std::vector<std::vector<int>> *reco_shower_hit_wire = new std::vector<std::vector<int>>(2, std::vector<int>(2, 1));
 	std::vector<std::vector<int>> *reco_shower_hit_plane = new std::vector<std::vector<int>>(2, std::vector<int>(2, 1));
@@ -102,7 +107,7 @@ int main(int argc, char **argv){
 	std::vector<std::vector<double>> *reco_track_hit_tick = new std::vector<std::vector<double>>(2, std::vector<double>(2, 1));
 
 	TLine xaxis = TLine(0, 0, 45, 0);
-	TLine xaxisrad = TLine(radius, 0, maxradius, 0);
+	TLine xaxisrad = TLine(radius, 0, maxradius + radiusInterval, 0);
 
 	//h6 are histograms of error vs. radius. Only used if iterating through radii but must be declared regardless to have sufficient scope.
 	TH2D *h6absolute, *h6percent;
@@ -247,7 +252,7 @@ int main(int argc, char **argv){
 
 
 		//Make Histograms to show relation between reco opening angle error and various reco and true parameters.
-		TH2D *h1 = new TH2D("h1", "True:Reco Opening Angle Response",45,0,45,90,0,90);
+		TH2D *h1 = new TH2D("h1", ("True:Reco Opening Angle Response (" + to_string_prec(radius, 1) + " cm)").c_str(),45,0,45,90,0,90);
 		TH2D *h2absolute = new TH2D("h2absolute", "Num Tracks + Showers:Reco Opening Angle Error", 2, 0.5, 2.5, 135, -45, 90);
 		TH2D *h3absolute = new TH2D("h3absolute", "E_max/E_total:Reco Opening Angle Error", (int) std::round((easymax - 0.50)/0.01), 0.50, easymax, 135, -45, 90);
 		TH2D *h4absolute = new TH2D("h4absolute", "True:Reco Opening Angle Error", 45, 0, 45, 135, -45, 90);
@@ -256,7 +261,7 @@ int main(int argc, char **argv){
 		TH2D *h3percent = new TH2D("h3percent", "E_max/E_total:Reco Opening Angle Error", (int) std::round((easymax - 0.50)/0.01), 0.50, easymax, 100, -100, 200);
 		TH2D *h4percent = new TH2D("h4percent", "True:Reco Opening Angle Error", 45, 0, 45, 100, -100, 200);
 		TH2D *h5percent = new TH2D("h5percent", "Reco Vertex Error:Reco Opening Angle Error", (int) std::round(dist_2_true_max/0.025), 0, dist_2_true_max, 100, -100, 200);
-		TH1D *hn_sp = new TH1D("hn_sp", "Number of Spacepoints in Radius", 1001, -0.5, 1000.5);
+		TH1D *hn_sp = new TH1D("hn_sp", ("Number of Spacepoints in " + to_string_prec(radius, 1) + " cm").c_str(), 1001, -0.5, 1000.5);
 
 		//some configuration bits
 		std::vector<int> cols = {kBlue-6, kMagenta+1};
@@ -367,7 +372,7 @@ int main(int argc, char **argv){
 				std::vector<std::string> vals = {  to_string_prec(true_opang,1),to_string_prec(easy,2),to_string_prec(e_tot,3),std::to_string(num_reco_tracks),std::to_string(num_reco_showers)};
 
 				//And do the cal does calculation and plots
-				SEAviewer reco_obj (objs, reco_vertex_3D, reco_vertex_2D, true_vertex, sp_reco + "_sp_" + vtx_reco + "_vert_weighted_"+std::to_string(subrun_number)+"_"+std::to_string(event_number), tags, vals, radius); 
+				SEAviewer reco_obj (objs, reco_vertex_3D, reco_vertex_2D, true_vertex, sp_reco + "_sp_" + vtx_reco + "_vert_" + fsuffixEVD + std::to_string(subrun_number)+"_"+std::to_string(event_number), tags, vals, radius); 
 				//SEAviewer reco_obj (objs, true_vertex, reco_vertex_2D, true_vertex, "fixed_plane_fit_"+std::to_string(subrun_number)+"_"+std::to_string(event_number), tags, vals, radius); 
 				int n_sp = reco_obj.reco_ang_calc();
 
@@ -432,7 +437,7 @@ int main(int argc, char **argv){
 
 		//Normalize (or not) the TH2D into a respsonse matrix.
 		if(graphResponse){
-			std::string fResponsename = sp_reco + "Response" + vtx_reco + "VertexWeighted";
+			std::string fResponsename = sp_reco + "Response" + vtx_reco + "Vertex" + fsuffix;
 			TH2D* h[9] = {h1, h2absolute, h2percent, h3absolute, h3percent, h4absolute, h4percent, h5absolute, h5percent};
 			std::string xlabel[5] = {"True e^{+}e^{-} Opening Angle [Deg]", "Number of Tracks + Showers", "E_max/E_total", "True e^{+}e^{-} Opening Angle [Deg]", "Vertex Error [cm]"}; //Is Vertex error actually in cm?
 			TFile *fResponse = new TFile((fResponsename + ".root").c_str(), "RECREATE");
@@ -599,9 +604,9 @@ int main(int argc, char **argv){
 				h[k] -> GetYaxis() -> SetTitle("Reco e^{+}e^{-} Opening Angle Error [%]");
 			h[k] -> GetXaxis() ->SetTitle("Radius of Reco Circle (cm)");
 			if(k == 0)
-				ch -> SaveAs((sp_reco + "Radius" + vtx_reco + "VertexWeighted.pdf(").c_str(), "pdf");
+				ch -> SaveAs((sp_reco + "Radius" + vtx_reco + "Vertex" + fsuffix + ".pdf(").c_str(), "pdf");
 			else
-				ch -> SaveAs((sp_reco + "Radius" + vtx_reco + "VertexWeighted.pdf)").c_str(), "pdf");
+				ch -> SaveAs((sp_reco + "Radius" + vtx_reco + "Vertex" + fsuffix + ".pdf)").c_str(), "pdf");
 		}}
 
 	delete reco_shower_hit_wire;
