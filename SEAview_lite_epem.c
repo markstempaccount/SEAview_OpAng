@@ -7,14 +7,15 @@ int  SEAviewer::reco_ang_calc(){
 
     //Loop over all objects and only select those within Xcm of reco vertex
     std::cout<<"SEAviewer::Begininig to calculate "<<radius<<" cm hits from all objs"<<std::endl;
+    double k = 1.0;
     for(auto &obj: objs){
         for(int j=0; j<obj.f_num_sp; j++){
             double dist_2_vert = sqrt( pow(reco_vertex_3D[0]-obj.f_sp_x[j],2)+  pow(reco_vertex_3D[1]-obj.f_sp_y[j],2) + pow(reco_vertex_3D[2]-obj.f_sp_z[j],2) );
-            if(dist_2_vert < radius){
+            if(dist_2_vert < log(999)/k + radius){
                 all_fit_points_x.push_back(obj.f_sp_x[j]);
                 all_fit_points_y.push_back(obj.f_sp_y[j]);
                 all_fit_points_z.push_back(obj.f_sp_z[j]);
-         	all_fit_weights.push_back(obj.f_weights[j]);   
+         	all_fit_weights.push_back(obj.f_weights[j]*(1 - 1/(1 + exp(-k*(dist_2_vert - radius)))));   
 	    }
         }
     }

@@ -50,7 +50,7 @@ int main(int argc, char **argv){
 	CLI::App app{"Run SEAviewer for e+e- opening angle calculations"}; 
 
 	// Define options
-	double radius = 10; bool candles = true; bool subplots = false; bool graphEVD_SEAview = false; bool graphResponse = true; bool normalizeResponse = false; double dist_2_true_max = 1.0; double min_rtang_diff = 0; int maxcnt = 1e6; double easymax = 0.9; double e_totmin = 100; bool iterateRadius = false; double radiusInterval = 0.5; double maxradius = 20; int pevent = -999; int psubrun = -999; bool singlemode = false; std::string sp_reco = "comb"; std::string vtx_reco = "pan", std::string fsuffix = "";
+	double radius = 10; bool candles = true; bool subplots = false; bool graphEVD_SEAview = false; bool graphResponse = true; bool normalizeResponse = false; double dist_2_true_max = 1.0; double min_rtang_diff = 0; int maxcnt = 1e6; double easymax = 0.9; double e_totmin = 100; bool iterateRadius = false; double radiusInterval = 0.5; double maxradius = 20; int pevent = -999; int psubrun = -999; bool singlemode = false; std::string sp_reco = "comb"; std::string vtx_reco = "pan"; std::string fsuffix = "";
 	//doubles
 	app.add_option("-r,--radius", radius, "radius for search");
 	app.add_option("-d,--dist", dist_2_true_max, "distance from true to reco");
