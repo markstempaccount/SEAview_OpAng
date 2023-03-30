@@ -6,7 +6,6 @@ rm *o
 g++ -g RunSEAview.c plothelper.c  RecoOpAng1.c SEAview_lite_epem.c  SetRealAspectRatio2.c -c $(root-config --libs --cflags) -v
 g++ -g *.o $(root-config --libs --cflags) -o RunSEA -v
 
-./RunSEA
 #valgrind --leak-check=full --show-leak-kinds=all --log-file=mylog ./RunSEA
 
 
