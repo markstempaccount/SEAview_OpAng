@@ -49,6 +49,8 @@ int main(int argc, char **argv){
 
     CLI::App app{"Run SEAviewer for e+e- opening angle calculations"}; 
 
+
+
     // Define options
     double radius = 1.0; bool candles = true; bool subplots = false; bool graphEVD_SEAview = false; bool graphResponse = true; bool normalizeResponse = false; double dist_2_true_max = 1.0; double min_rtang_diff = 0; int maxcnt = 100; double easymax = 0.9; double e_totmin = 100; bool iterateRadius = true; double radiusInterval = 0.5; double maxradius = 2;
 
