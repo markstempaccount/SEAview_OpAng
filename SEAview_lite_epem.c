@@ -7,15 +7,17 @@ int  SEAviewer::reco_ang_calc(){
 
     //Loop over all objects and only select those within Xcm of reco vertex
     std::cout<<"SEAviewer::Begininig to calculate "<<radius<<" cm hits from all objs"<<std::endl;
-    double k = 1.0;
+    double k = 1;
     for(auto &obj: objs){
         for(int j=0; j<obj.f_num_sp; j++){
             double dist_2_vert = sqrt( pow(reco_vertex_3D[0]-obj.f_sp_x[j],2)+  pow(reco_vertex_3D[1]-obj.f_sp_y[j],2) + pow(reco_vertex_3D[2]-obj.f_sp_z[j],2) );
             if(dist_2_vert < log(999)/k + radius){
+	    //if(dist_2_vert < radius){
                 all_fit_points_x.push_back(obj.f_sp_x[j]);
                 all_fit_points_y.push_back(obj.f_sp_y[j]);
                 all_fit_points_z.push_back(obj.f_sp_z[j]);
-         	all_fit_weights.push_back(obj.f_weights[j]*(1 - 1/(1 + exp(-k*(dist_2_vert - radius)))));   
+         	all_fit_weights.push_back(obj.f_weights[j]*(1 - 1/(1 + exp(-k*(dist_2_vert - radius)))));
+		//all_fit_weights.push_back(1);
 	    }
         }
     }
@@ -40,8 +42,16 @@ int  SEAviewer::reco_ang_calc(){
 
 void SEAviewer::plotter(){
     std::string print_name = "EVD_SEAview_"+tag;
-    TCanvas * can=new TCanvas(print_name.c_str(),print_name.c_str(),3000,2400);
-    can->Divide(4,3,0,0.1);
+    TCanvas * can=new TCanvas(print_name.c_str(),print_name.c_str(),3000,1600);
+    can -> SetLeftMargin(0.15);
+    can->Divide(4,2,0,0.5);
+    TText *title = new TText(0.735, 0.94, "MicroBooNE Simulation In Progress");
+    title -> SetTextAlign(33);
+    title -> SetTextColor(kBlack);
+    title -> SetTextFont(42);
+    title -> SetTextSize(0.02);
+    title -> SetNDC();
+    title -> Draw();
 
     double plot_point_size=1.0;        
     double buffer = 0.05;
@@ -58,6 +68,7 @@ void SEAviewer::plotter(){
 
 
     //******************************* First plot "Vertex" ***************************************
+    /*
     std::vector<TGraph> vertex_graphs;
     std::vector<TGraph> vec_all_graphs;
     for(int i=0; i< 3; i++){
@@ -69,7 +80,7 @@ void SEAviewer::plotter(){
 
     for(int i=0; i<3; i++){
         TPad * pader = (TPad*)can->cd(i+1);
-        if(i==0) pader->SetLeftMargin(0.1);
+        if(i==0) pader->SetLeftMargin(0.2);
 
         //only show area surrounding the vertex up to std::min(plot_distance, distance_bw_vertex_channel_min/max)
         for(auto &o: objs){
@@ -97,13 +108,14 @@ void SEAviewer::plotter(){
         vertex_graphs[i].Draw("ap");
 
         if(i>0){
-            vertex_graphs[i].GetYaxis()->SetLabelOffset(999);
-            vertex_graphs[i].GetYaxis()->SetLabelSize(0);
+            //vertex_graphs[i].GetYaxis()->SetLabelOffset(999);
+            //vertex_graphs[i].GetYaxis()->SetLabelSize(0);
         }
     }
+    */
 
     /********************************* All Hits in all OBJ's****************************/
-
+/*
 
     for(int i=0; i<3; i++){
         can->cd(i+1);
@@ -121,7 +133,8 @@ void SEAviewer::plotter(){
             o++;
         }
     }
-
+*/
+    
     //******************************** DeadWireRegions********************************************
     //*** For now ignore, might copy in later ****
     //******************************** DeadWireRegions********************************************
@@ -186,17 +199,24 @@ void SEAviewer::plotter(){
     if(Y_min <0 ) ymodl = 1;
     if(Y_max <0)  ymodu = -1;
 
-    TPad * paderXY = (TPad*)can->cd(5);
-    paderXY->SetLeftMargin(0.1);
+    TPad * paderXY = (TPad*)can->cd(1);
+    Double_t xlow, ylow, xup, yup;
+    paderXY -> GetPadPar(xlow, ylow, xup, yup);
+    double xlownew = xlow;
+    double ylownew = ylow - (1/0.9-1)*(yup - ylow);
+    paderXY -> SetPad(xlownew, ylownew, xup, yup);
+    paderXY -> SetBottomMargin(0.1);
+    paderXY -> SetFillStyle(4000);
     TGraph  evdXY =   objs[0].f_graph_3D[0]; 
     TGraph * evdRecoStartPointXY = new TGraph(1,&(reco_vertex_3D)[0], &(reco_vertex_3D)[1]);
     TGraph * evdTrueStartPointXY = new TGraph(1,&(true_vertex)[0], &(true_vertex)[1]);
     evdXY.SetMarkerColor(objs[0].f_col);
     evdXY.SetMarkerStyle(20);
     evdXY.SetMarkerSize(1);
+    //evdXY.SetFillColorAlpha(kWhite, 0.0);
     evdXY.SetTitle("");
-    evdXY.GetYaxis()->SetTitle(" Y [cm]");
-    evdXY.GetXaxis()->SetTitle(" X [cm]");
+    evdXY.GetYaxis()->SetTitle("Y [cm]  ");
+    evdXY.GetXaxis()->SetTitle("X [cm]  ");
     evdXY.GetYaxis()->SetRangeUser((1.0+ymodl*buffer)*Y_min,(1.0+ymodu*buffer)*Y_max);
     evdXY.GetXaxis()->SetLimits((1.0-buffer)*X_min, (1.0+buffer)*X_max);
     evdXY.Draw("ap");
@@ -216,18 +236,20 @@ void SEAviewer::plotter(){
     evdTrueStartPointXY->SetMarkerSize(2);
     evdTrueStartPointXY->SetMarkerColor(kCyan);
 
-    TEllipse *elXY3 = new TEllipse( reco_vertex_3D[0],reco_vertex_3D[1],3,3);
-    elXY3->SetFillStyle(0);
-    elXY3->SetLineColor(kRed-6);
-    elXY3->SetLineWidth(1);
-    elXY3->Draw();
     TEllipse *elXY5 = new TEllipse( reco_vertex_3D[0],reco_vertex_3D[1],radius,radius);
     elXY5->SetFillStyle(0);
     elXY5->SetLineColor(kMagenta);
     elXY5->SetLineWidth(1);
     elXY5->Draw();
 
-    TPad * paderZY = (TPad*)can->cd(6);
+    TPad * paderZY = (TPad*)can->cd(2);
+    paderZY -> GetPadPar(xlow, ylow, xup, yup);
+    xlownew = xlow - (1/0.9-1)*(xup - xlow);
+    ylownew = ylow - (1/0.9-1)*(yup - ylow);
+    paderZY -> SetPad(xlownew, ylownew, xup, yup);
+    paderZY -> SetLeftMargin(0.1);
+    paderZY -> SetBottomMargin(0.1);
+    paderZY -> SetFillStyle(4000);
     TGraph  evdZY =  objs[0].f_graph_3D[1];//new TGraph(reco_shower_sp_z.size(), &(reco_shower_sp_z)[0], &(reco_shower_sp_y)[0]);
     TGraph * evdRecoStartPointZY = new TGraph(1,&(reco_vertex_3D)[2], &(reco_vertex_3D)[1]);
     TGraph * evdTrueStartPointZY = new TGraph(1,&(true_vertex)[2], &(true_vertex)[1]);
@@ -235,10 +257,10 @@ void SEAviewer::plotter(){
     evdZY.SetMarkerSize(1);
     evdZY.SetMarkerColor(objs[0].f_col);
     evdZY.SetTitle("");
-    evdZY.GetYaxis()->SetTitle(" Y [cm]");
-    evdZY.GetXaxis()->SetTitle(" Z [cm]");
+    evdZY.GetYaxis()->SetTitle("Y [cm]  ");
+    evdZY.GetXaxis()->SetTitle("Z [cm]  ");
     evdZY.GetYaxis()->SetRangeUser((1.0+ymodl*buffer)*Y_min,(1.0+ymodu*buffer)*Y_max);
-    evdZY.GetXaxis()->SetLimits((1.0-buffer)*Z_min, (1.0+buffer)*Z_max);
+    evdZY.GetXaxis()->SetLimits((1.0-buffer)*Z_min, (1.0+buffer)*Z_max);	
     evdZY.Draw("ap");
 
     for(int i=1; i<objs.size(); i++){
@@ -258,11 +280,6 @@ void SEAviewer::plotter(){
     evdTrueStartPointZY->SetMarkerSize(2);
     evdTrueStartPointZY->SetMarkerColor(kCyan);
 
-    TEllipse *elZY3 = new TEllipse( reco_vertex_3D[2],reco_vertex_3D[1],3,3);
-    elZY3->SetFillStyle(0);
-    elZY3->SetLineColor(kRed-6);
-    elZY3->SetLineWidth(1);
-    elZY3->Draw();
     TEllipse *elZY5 = new TEllipse( reco_vertex_3D[2],reco_vertex_3D[1],radius,radius);
     elZY5->SetFillStyle(0);
     elZY5->SetLineColor(kMagenta);
@@ -271,7 +288,14 @@ void SEAviewer::plotter(){
 
 
 
-    TPad * paderZX = (TPad*)can->cd(7);
+    TPad * paderZX = (TPad*)can->cd(3);
+    paderZX -> GetPadPar(xlow, ylow, xup, yup);
+    xlownew = xlow - (1/0.9-1)*(xup - xlow);
+    ylownew = ylow - (1/0.9-1)*(yup - ylow);
+    paderZX -> SetPad(xlownew, ylownew, xup, yup);
+    paderZX -> SetLeftMargin(0.1);
+    paderZX -> SetBottomMargin(0.1);
+    paderZX -> SetFillStyle(4000);
     TGraph  evdZX = objs[0].f_graph_3D[2];//new TGraph(reco_shower_sp_x.size(), &(reco_shower_sp_z)[0], &(reco_shower_sp_x)[0]);
     TGraph * evdRecoStartPointZX = new TGraph(1,&(reco_vertex_3D)[2], &(reco_vertex_3D)[0]);
     TGraph * evdTrueStartPointZX = new TGraph(1,&(true_vertex)[2], &(true_vertex)[0]);
@@ -279,8 +303,8 @@ void SEAviewer::plotter(){
     evdZX.SetMarkerSize(1);
     evdZX.SetMarkerColor(objs[0].f_col);
     evdZX.SetTitle("");
-    evdZX.GetYaxis()->SetTitle(" X [cm]");
-    evdZX.GetXaxis()->SetTitle(" Z [cm]");
+    evdZX.GetYaxis()->SetTitle("X [cm]  ");
+    evdZX.GetXaxis()->SetTitle("Z [cm]  ");
     evdZX.GetYaxis()->SetRangeUser((1.0-buffer)*X_min,(1.0+buffer)*X_max);
     evdZX.GetXaxis()->SetLimits((1.0-buffer)*Z_min, (1.0+buffer)*Z_max);
     evdZX.Draw("ap");
@@ -301,26 +325,23 @@ void SEAviewer::plotter(){
     evdTrueStartPointZX->SetMarkerSize(2);
     evdTrueStartPointZX->SetMarkerColor(kCyan);
 
-    TEllipse *elZX3 = new TEllipse( reco_vertex_3D[2],reco_vertex_3D[0],3,3);
-    elZX3->SetFillStyle(0);
-    elZX3->SetLineColor(kRed-6);
-    elZX3->SetLineWidth(1);
-    elZX3->Draw();
     TEllipse *elZX5 = new TEllipse( reco_vertex_3D[2],reco_vertex_3D[0],radius,radius);
     elZX5->SetFillStyle(0);
     elZX5->SetLineColor(kMagenta);
     elZX5->SetLineWidth(1);
     elZX5->Draw();
 
-    can->cd(8);    
+    can->cd(4);    
     TLegend *l3d = new TLegend(0.11,0.11,0.89,0.89);
+    //TLegend *l3d = new TLegend(0.1, 0.0, 0.9, 1.0);
     l3d->SetFillStyle(0);
     l3d->Draw();
     l3d->AddEntry(&evdXY,"Reco 3D Spacepoints","p");
     l3d->AddEntry(evdRecoStartPointXY,"Reco 3D Start Point","p");
     l3d->AddEntry(evdTrueStartPointXY,"True 3D Start Point","p");
-    l3d->AddEntry(elZX3,"3cm Radius","l");
-    l3d->AddEntry(elZX5,(std::to_string(radius)+"cm Radius").c_str(),"l");
+    l3d->AddEntry(elZX5,(to_string_prec(radius, 1)+"cm Radius").c_str(),"l");
+    //l3d->SetHeader("MicroBooNE Simulation In Progress", "C");
+
 
 
     //Bottom 3 pads, is also where we calculate the actual numbers
@@ -336,9 +357,11 @@ void SEAviewer::plotter(){
 
     if(out_graphs2D.size()!=0){
         for(int i=0; i<3; i++){
-            can->cd(9+i);
-
-            std::cout<<"Int Line "<<i<<" "<<out_graphs2D.size()<<std::endl;
+            TPad *pader = (TPad*)can->cd(5+i);
+            //pader->SetTopMargin(0.15);
+	    pader -> SetFillStyle(4000);
+	    pader -> SetFrameFillStyle(4000);
+	    std::cout<<"Int Line "<<i<<" "<<out_graphs2D.size()<<std::endl;
             out_graphs2D[i].Draw("ap");
             out_graphs2D[i].GetYaxis()->SetRangeUser(-radius,radius);
             out_graphs2D[i].GetXaxis()->SetLimits(-radius,radius);
@@ -346,11 +369,12 @@ void SEAviewer::plotter(){
             out_graphs2D[i].SetMarkerSize(2);
             out_graphs2D[i].SetMarkerStyle(20);
             out_graphs2D[i].SetMarkerColor(kRed-6);
+	    //out_graphs2D[i].SetFillColorAlpha(kWhite, 0.0);
             out_graphs2D[i+3].Draw("p");
             out_graphs2D[i+3].SetMarkerSize(2);
             out_graphs2D[i+3].SetMarkerStyle(20);
             out_graphs2D[i+3].SetMarkerColor(kGreen-6);
-
+	    //out_graphs2D[i+1].SetFillColorAlpha(kWhite, 0.0);
             getLine2D(&left_fit[0],kRed-6,i,radius);
             getLine2D(&right_fit[0],kGreen-6,i,radius);
             zero.Draw("same p");
@@ -358,16 +382,17 @@ void SEAviewer::plotter(){
     }
 
     //**************************** INFO ***************************/
-    TPad *p_top_info = (TPad*)can->cd(4);
+    TPad *p_top_info = (TPad*)can->cd(8);
     p_top_info->cd();
 
     std::cout<<"Printing INFO into canvas 4"<<std::endl;
-    TLegend l_top(0.1,0.0,0.9,1.0);
+    TLegend l_top(0.0,0.1,1.0,1.0);
     l_top.SetTextSize(0.05);
+    //TLegend l_top(0.11, 0.11, 0.89, 0.89);
 
     TLine *l = new TLine(0,0,0,0);
     l->SetLineColor(kWhite);
-    l_top.AddEntry(l,("Reco  #theta e^{+}e^{-} : "+std::to_string(reco_ang)).c_str(),"l");
+    l_top.AddEntry(l,("Reco #theta (e^{+}e^{-}) : "+std::to_string(reco_ang)).c_str(),"l");
     for(int p=0; p<tags.size(); p++){
 
         l_top.AddEntry(l,(tags[p]+" : "+vals[p]).c_str(),"l");
@@ -382,14 +407,16 @@ void SEAviewer::plotter(){
 
 */
     }
-
-    l_top.SetHeader((print_name+". 2D recob::Hits").c_str(),"C");
+	
+    //l_top.SetHeader((print_name+". 2D recob::Hits").c_str(),"C");
+    //l_top.SetHeader("MicroBooNE Simulation In Progress", "C");
     l_top.SetLineWidth(0);
     l_top.SetLineColor(kWhite);
     l_top.Draw("same");
 
     std::cout<<"And save PDF"<<std::endl;
     can->Update();
+    can->SaveAs((print_name+".C").c_str());
     can->SaveAs((print_name+".pdf").c_str(),"pdf");
     can->Close(); gSystem->ProcessEvents();
     return;

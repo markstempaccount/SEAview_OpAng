@@ -43,7 +43,9 @@
 #include "TSystem.h"
 #include "TStyle.h"
 #include "TCanvas.h"
-
+#include "TPaveText.h"
+#include "TString.h"
+#include "TText.h"
 
 int main(int argc, char **argv){
 
@@ -80,7 +82,7 @@ int main(int argc, char **argv){
 
 	printf("Argument input for this run -- radius : %f , dist : %f , mindiff : %f, maxcnt : %i, easymax : %f, emin : %f, interval : %f, maxrad : %f \n",radius,dist_2_true_max,min_rtang_diff,maxcnt,easymax,e_totmin,radiusInterval,maxradius);
 	printf("Argument bools for this run -- candles : %i , subplots : %i , evd : %i, response : %i, normalize : %i, iterate: %i \n",candles,subplots,graphEVD_SEAview,graphResponse,normalizeResponse,iterateRadius);
-	printf("Argument strings for this run -- sp_reco: %s, vtx_reco : %s\n", sp_reco.c_str(), vtx_reco.c_str());
+	printf("Argument strings for this run -- sp_reco: %s, vtx_reco : %s, fsuffix : %s\n", sp_reco.c_str(), vtx_reco.c_str(), fsuffix.c_str());
 
 	if(pevent > 0 && psubrun > 0) singlemode = true;
 
@@ -96,6 +98,18 @@ int main(int argc, char **argv){
 	if(fsuffix != "")
 		fsuffixEVD = fsuffix + "_";
 
+	std::string sp_reco_full, vtx_reco_full;
+	if(sp_reco == "pan")
+		sp_reco_full = "Pandora";
+	else if(sp_reco == "wc")
+		sp_reco_full = "Wire-Cell";
+	else if (sp_reco == "comb")
+		sp_reco_full = "Combined";
+	if(vtx_reco == "pan")
+		vtx_reco_full = "Pandora";
+	else if(vtx_reco == "wc")
+		vtx_reco_full = "Wire-Cell";
+
 	//Some vectors to store the 2D recob::Hits. The Wire number, the plane (0,1 or 2), the energy and the peak time tick
 	std::vector<std::vector<int>> *reco_shower_hit_wire = new std::vector<std::vector<int>>(2, std::vector<int>(2, 1));
 	std::vector<std::vector<int>> *reco_shower_hit_plane = new std::vector<std::vector<int>>(2, std::vector<int>(2, 1));
@@ -107,7 +121,7 @@ int main(int argc, char **argv){
 	std::vector<std::vector<double>> *reco_track_hit_tick = new std::vector<std::vector<double>>(2, std::vector<double>(2, 1));
 
 	TLine xaxis = TLine(0, 0, 45, 0);
-	TLine xaxisrad = TLine(radius, 0, maxradius + radiusInterval, 0);
+	TLine xaxisrad = TLine(radius, 0, maxradius + radiusInterval/2, 0);
 
 	//h6 are histograms of error vs. radius. Only used if iterating through radii but must be declared regardless to have sufficient scope.
 	TH2D *h6absolute, *h6percent;
@@ -368,7 +382,7 @@ int main(int argc, char **argv){
 				//double reco_ang = 0;
 
 				//Some info to plot on the SEAviewer
-				std::vector<std::string> tags ={"True #theta e^{+}e^{-}","E_max/E_total","E_total", "Num Trk: ","Num Shr: "};
+				std::vector<std::string> tags ={"True #theta (e^{+}e^{-})","E_{max}/E_{total}","E_{total}", "No. Tracks: ","No. Showers: "};
 				std::vector<std::string> vals = {  to_string_prec(true_opang,1),to_string_prec(easy,2),to_string_prec(e_tot,3),std::to_string(num_reco_tracks),std::to_string(num_reco_showers)};
 
 				//And do the cal does calculation and plots
@@ -448,11 +462,32 @@ int main(int argc, char **argv){
 			TCanvas *ch2 = new TCanvas("ch2", "ch2", 3000, 2400);
 			TCanvas *ch3 = new TCanvas("ch3", "ch3", 3000, 2400);
 			TCanvas *ch4 = new TCanvas();
+			ch1->SetRightMargin(0.14);
+			ch1->SetLeftMargin(0.12);
+			ch2->SetRightMargin(0.14);
+			ch2->SetLeftMargin(0.12);
+			ch3->SetRightMargin(0.14);
+			ch3->SetLeftMargin(0.12);
+			TString line1 = "MicroBooNE Simulation In Progress";
+			TString line2 = "Space Points: " + sp_reco_full;
+			TString line3 = "Vertex: " + vtx_reco_full;
+			TPaveText *text = new TPaveText(0, 81, 36, 90);
+			text -> SetBorderSize(0);
+			text -> SetFillColorAlpha(0, 0);
+			TText *text1 = text -> AddText(line1.Data());
+			text -> AddText(line2.Data());
+			text -> AddText(line3.Data());
+			text -> SetTextAlign(13);
+			text -> SetTextFont(42);
+			text -> SetTextSize(0.04);
+			text1 -> SetTextSize(0.03);
 			if(subplots){
 				ch2 -> Divide(2, 2);
 				ch3 -> Divide(2, 2);
 			}
 			for(int k = 0; k < 9; k++){
+				if(k == 1 || k == 2)
+					gStyle -> SetOptStat(1);
 				if(normalizeResponse && k != 9){
 					std::vector<double> norms;
 					for(int i=0; i<=h[k] ->GetNbinsX(); i++){
@@ -499,9 +534,15 @@ int main(int argc, char **argv){
 				}
 				else
 					h[k] -> Draw("colz");
+				//TPaletteAxis* colorAxis = dynamic_cast<TPaletteAxis*>(h[k]->GetListOfFunctions()->FindObject("palette"));
+				//colorAxis -> SetName("No. Events");
+				h[k] -> GetZaxis() -> CenterTitle();
+				h[k] -> SetZTitle("No. Events");
 				xaxis.DrawLine(firstbinxlowedge, 0, lastbinxhighedge, 0);
-				if(k == 0)
+				if(k == 0){
+					xaxis.DrawLine(0, 0, 45, 45);
 					h[k] -> GetYaxis()->SetTitle("Reco e^{+}e^{-} Opening Angle [Deg]");
+				}
 				else if(k%2)
 					h[k] -> GetYaxis() -> SetTitle("Reco e^{+}e^{-} Opening Angle Error [Deg]");
 				else
@@ -510,27 +551,32 @@ int main(int argc, char **argv){
 				if(k == 0){
 					SetRealAspectRatio2(ch1, 1);
 					SetRealAspectRatio2(ch1, 2);
+					text -> Draw();
 					ch1 ->Write();
 					ch1 ->SaveAs((fResponsename + ".pdf(").c_str(), "pdf");
 					ch1 ->SaveAs("ch1.C");
 				}
 				else if(k == 8){
+					text -> Draw();
 					ch3 ->Write();
 					ch3 -> SaveAs((fResponsename + ".pdf").c_str(), "pdf");
 					ch3 ->SaveAs("ch3.C");
 				}
 				else if(!subplots){
+					text -> Draw();
 					ch3 ->Write();
 					ch3 -> SaveAs((fResponsename + ".pdf").c_str(), "pdf");
 					ch3 ->SaveAs("ch3.C");
 				}
 				else if(k == 7){
 					ch2 -> Write();
-					ch3 -> SaveAs((fResponsename + ".pdf").c_str(), "pdf");
+					ch2 -> SaveAs((fResponsename + ".pdf").c_str(), "pdf");
 					ch2 -> SaveAs("ch2.C");
 				}
 				h[k] ->SaveAs((fResponsename + std::to_string(k) + ".C").c_str());
 				fResponse -> Close();
+				if(k == 1 || k == 2)
+					gStyle -> SetOptStat(0);
 				//delete ch1;
 				//delete ch2;
 				//delete ch3;
@@ -540,7 +586,9 @@ int main(int argc, char **argv){
 			int lastbinx = hn_sp -> FindLastBinAbove(0, 1);
 			double lastbinxhighedge = hn_sp -> GetXaxis() -> GetBinLowEdge(lastbinx + 1);
 			hn_sp -> GetXaxis() -> SetRangeUser(firstbinxlowedge, lastbinxhighedge);
-			gStyle -> SetOptStat(1);
+			hn_sp -> GetXaxis() -> SetTitle("Number of Space Points");
+			hn_sp -> GetYaxis() -> SetTitle("Events");
+			gStyle -> SetOptStat(1110);
 			hn_sp -> Draw();
 			ch4 -> SaveAs((fResponsename + ".pdf)").c_str(), "pdf");
 			gStyle -> SetOptStat(0);
@@ -552,26 +600,34 @@ int main(int argc, char **argv){
 			fprintf(ferr, "-9999: %d\n", e9999);
 			fprintf(ferr, "total: %d\n", e9995 + e9996 + e9997 + e9998 + e9999);
 			fclose(ferr);
+			delete text;
 		}
 		gSystem -> cd(work_dir.c_str());
 		radius += radiusInterval;
 		fWC->Close();
-		//delete h1;
-		//delete h2absolute;
-		//delete h2percent;
-		//delete h3absolute;
-		//delete h3percent;
-		//delete h4absolute;
-		//delete h4percent;
-		//delete h5absolute;
-		//delete h5percent;
 	}
 	if(iterateRadius){
 		TH2D* h[2] = {h6absolute, h6percent};	
 		TCanvas *ch = new TCanvas("ch2", "ch2", 3000, 2400);
+		ch->SetRightMargin(0.20);
+		ch->SetLeftMargin(0.12);
+		TString line1 = "MicroBooNE Simulation In Progress";
+		TString line2 = "Space Points: " + sp_reco_full;
+		TString line3 = "Vertex: " + vtx_reco_full;
+		TPaveText *text = new TPaveText(3.85, 59.5, 17.15, 88);
+		text -> SetBorderSize(0);
+		text -> SetFillColorAlpha(0, 0);
+		TText *text1 = text -> AddText(line1.Data());
+		text -> AddText(line2.Data());
+		text -> AddText(line3.Data());
+		text -> SetTextAlign(13);
+		text -> SetTextFont(42);
+		text -> SetTextSize(0.04);
+		text1 -> SetTextSize(0.03);
+		text -> SetTextColor(kBlack);
 		for(int k = 0; k < 2; k++){
 			std::vector<double> norms;
-			for(int i=0; i<=h[k] ->GetNbinsX(); i++){
+			for(int i=0; i<=h[k] -> GetNbinsX(); i++){
 				norms.push_back(0.0);
 				for(int j=0; j<=h[k] ->GetNbinsY(); j++){
 					norms.back()+= h[k] ->GetBinContent(i,j);
@@ -597,17 +653,27 @@ int main(int argc, char **argv){
 			}
 			else
 				h[k] -> Draw("colz");
+			h[k] -> GetZaxis() -> CenterTitle();
+			h[k] -> GetZaxis() -> SetTitleOffset(1.4);
+			h[k] -> SetZTitle("Fraction of Events");
 			xaxisrad.Draw();
 			if(k==0)
 				h[k] -> GetYaxis() -> SetTitle("Reco e^{+}e^{-} Opening Angle Error [Deg]");
-			else
+			else{
 				h[k] -> GetYaxis() -> SetTitle("Reco e^{+}e^{-} Opening Angle Error [%]");
-			h[k] -> GetXaxis() ->SetTitle("Radius of Reco Circle (cm)");
+				//text -> SetY1(160);
+				//text -> SetY2(190);
+				text -> SetTextColor(kWhite);
+			}
+			text -> Draw();
+			h[k] -> GetXaxis() ->SetTitle("Fitting Radius (cm)");
 			if(k == 0)
 				ch -> SaveAs((sp_reco + "Radius" + vtx_reco + "Vertex" + fsuffix + ".pdf(").c_str(), "pdf");
 			else
 				ch -> SaveAs((sp_reco + "Radius" + vtx_reco + "Vertex" + fsuffix + ".pdf)").c_str(), "pdf");
-		}}
+		}
+		delete text;
+	}
 
 	delete reco_shower_hit_wire;
 	delete reco_shower_hit_plane;

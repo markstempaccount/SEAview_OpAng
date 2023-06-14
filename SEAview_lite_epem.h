@@ -21,12 +21,14 @@
 #include <map>
 #include "TRandom3.h"
 #include "TLine.h"
+#include "TText.h"
 
 #include "TROOT.h"
 #include "TSystem.h"
 #include "TStyle.h"
 #include "TCanvas.h"
 #include <algorithm>
+#include "plothelper.h"
 
 #include <string>
 
